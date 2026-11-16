@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fehlerbild</title>
+<meta name="theme-color" content="#f3efe8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Fehlerbild">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23f3efe8'/%3E%3Crect x='10' y='18' width='44' height='28' rx='4' fill='none' stroke='%239d2c1c' stroke-width='5'/%3E%3Cpath d='M20 38l8-9 7 6 9-11' fill='none' stroke='%231e1a16' stroke-width='4'/%3E%3C/svg%3E">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout: eine Spalte bis 520px, Karten auf Werkstatt-Papier, Prüfstempel als Signatur */
+  --bg:#f3efe8; --card:#fffdf8; --ink:#1e1a16; --muted:#6e675f; --line:#ddd4c8;
+  --red:#9d2c1c; --green:#2f5d45; --brown:#8a5a12;
+  --font:"Source Sans 3",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --r:10px;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.4 var(--font)}
+button,input,select,textarea{font:inherit;color:inherit}
+img{max-width:100%;display:block}
+h1,h2,h3{margin:0;text-wrap:balance}
+p{margin:0}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.small{font-size:15px}
+.wrap{max-width:520px;margin:0 auto;padding:16px 16px 110px;display:flex;flex-direction:column;gap:14px}
+:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+label:focus-within{outline:3px solid var(--ink);outline-offset:2px}
+.vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip-path:inset(50%)}
+
+.top h1{font-size:34px;font-weight:700;letter-spacing:-.01em;line-height:1.1}
+.top p{color:var(--muted);margin-top:2px}
+
+.bar{display:flex;align-items:center;gap:10px;min-height:48px}
+.bar h2{font-size:24px;font-weight:700;flex:1;min-width:0;overflow-wrap:anywhere}
+.backbtn{min-height:44px;padding:0 12px 0 8px;border:1.5px solid var(--line);background:var(--card);border-radius:8px;font-weight:600;cursor:pointer;white-space:nowrap}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:10px}
+.card h3{font-size:18px;font-weight:700}
+.rowhead{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.link{background:none;border:0;padding:6px 0;color:var(--red);font-weight:600;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:10px 16px;border:1.5px solid var(--ink);background:var(--card);border-radius:8px;font-weight:600;cursor:pointer;text-align:center;position:relative}
+.btn.primary{background:var(--red);border-color:var(--red);color:#fffdf8}
+.btn.green{background:var(--green);border-color:var(--green);color:#fffdf8}
+.btn.quiet{border-color:var(--line)}
+.btn.danger{border-color:var(--red);color:var(--red)}
+.btn.armed{background:var(--red);border-color:var(--red);color:#fffdf8}
+.btn.big{min-height:72px;font-size:20px}
+.btn.sm{min-height:44px;padding:6px 12px;font-size:16px}
+.btn:active{transform:translateY(1px)}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap}
+.btnrow>*{flex:1 1 140px}
+
+.clock{font-size:44px;font-weight:500;line-height:1;letter-spacing:-.02em}
+.clock small{font-size:22px;color:var(--muted)}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;border:1.5px solid var(--ink);border-radius:8px;overflow:hidden}
+.seg button{min-height:46px;border:0;border-left:1.5px solid var(--ink);background:var(--card);font-weight:600;cursor:pointer;padding:4px 6px}
+.seg button:first-child{border-left:0}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--card)}
+.seg button:focus-visible{outline-offset:-4px}
+.seg button[aria-pressed="true"][class]{background:var(--st)}
+.seg.wrapseg{grid-auto-flow:row;grid-template-columns:1fr 1fr}
+.seg.wrapseg button{border-left:0;border-top:1.5px solid var(--ink)}
+.seg.wrapseg button:nth-child(-n+2){border-top:0}
+.seg.wrapseg button:nth-child(even){border-left:1.5px solid var(--ink)}
+.seg.wrapseg button:last-child:nth-child(odd){grid-column:1/-1}
+
+.mrow{display:grid;grid-template-columns:48px 1fr auto;gap:12px;align-items:center;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:10px 0;cursor:pointer;min-height:68px}
+.mrow:first-of-type{border-top:0}
+.mrow .nm{font-weight:600;overflow-wrap:anywhere}
+.ava{width:48px;height:48px;border-radius:50%;border:3px solid var(--st,var(--line));background:var(--bg);display:grid;place-items:center;overflow:hidden;font-weight:700;color:var(--muted);flex:none}
+.ava img{width:100%;height:100%;object-fit:cover}
+.ava.lg{width:112px;height:112px;border-width:5px;font-size:34px}
+.st-run{--st:var(--green)} .st-chk{--st:var(--ink)} .st-mnt{--st:var(--brown)} .st-err,.st-stop{--st:var(--red)}
+.pill{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--st);color:var(--st);border-radius:999px;padding:2px 10px;font-weight:600;font-size:15px;white-space:nowrap}
+.pill::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
+.pill.st-stop{background:var(--st);color:var(--card)}
+
+.note{border:1.5px solid var(--brown);border-left-width:6px;border-radius:8px;padding:12px;background:var(--card);display:flex;flex-direction:column;gap:8px}
+.note.red{border-color:var(--red)}
+.note strong{color:var(--brown)} .note.red strong{color:var(--red)}
+
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{display:flex;flex-direction:column;justify-content:space-between;gap:14px;min-height:104px;padding:12px;background:var(--card);border:1.5px solid var(--ink);border-radius:var(--r);text-align:left;cursor:pointer}
+.tile.wide{grid-column:1/-1;flex-direction:row;justify-content:flex-start;align-items:center;min-height:76px;background:var(--red);border-color:var(--red);color:#fffdf8;font-size:22px}
+.tile .tl{font-weight:700;font-size:19px}
+.tile.wide .tl{font-size:22px}
+.tile .tt{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.tile .cnt{font-family:var(--mono);font-size:15px;color:var(--muted);text-align:right}
+.tile .cnt.on{color:var(--green);font-weight:600}
+.tile .cnt.hot{color:var(--red);font-weight:600}
+.tile svg,.btn svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+.field{display:flex;flex-direction:column;gap:4px}
+.field>span{font-weight:600;font-size:15px;color:var(--muted)}
+input[type=text],select,textarea{width:100%;min-height:50px;padding:10px 12px;border:1.5px solid var(--ink);border-radius:8px;background:#fff}
+textarea{min-height:76px;resize:vertical}
+.check{display:flex;gap:12px;align-items:flex-start;min-height:48px;padding:10px 12px;border:1.5px solid var(--line);border-radius:8px;cursor:pointer}
+.check input{width:24px;height:24px;margin:1px 0 0;accent-color:var(--green);flex:none}
+.inline{display:flex;gap:8px}
+.inline input{flex:1;min-width:0}
+.inline .btn{flex:none}
+
+.photo{position:relative;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:#e9e3d9}
+.photo img{width:100%;max-height:340px;object-fit:contain}
+.stamp{display:inline-block;font-family:var(--mono);font-weight:600;text-transform:uppercase;letter-spacing:.08em;font-size:15px;border:2.5px solid currentColor;border-radius:4px;padding:4px 10px;transform:rotate(-2.5deg);background:rgba(255,253,248,.9)}
+.photo .stamp{position:absolute;left:12px;bottom:14px}
+.stamp.sure{color:var(--green)} .stamp.chk{color:var(--brown)} .stamp.unsure,.stamp.none{color:var(--red)}
+.simbig{font-family:var(--mono);font-size:34px;font-weight:500;line-height:1}
+.simline{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:44px;padding:6px 12px;border:1.5px solid var(--line);border-radius:8px;background:var(--card);cursor:pointer;text-align:left}
+.chip[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.chip b{font-family:var(--mono);font-weight:500;margin-left:6px}
+
+.grow{display:grid;grid-template-columns:64px 1fr auto;gap:12px;align-items:center;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:8px;cursor:pointer;min-height:80px}
+.grow img{width:64px;height:64px;object-fit:cover;border-radius:6px;background:#e9e3d9}
+.grow .t{font-weight:600;overflow-wrap:anywhere}
+.grow .r{font-family:var(--mono);text-align:right;font-size:15px}
+.grow.sel{border-color:var(--ink);box-shadow:inset 0 0 0 2px var(--ink)}
+.tag{font-family:var(--mono);font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--brown);border:1px solid var(--brown);border-radius:3px;padding:0 4px}
+.list{display:flex;flex-direction:column;gap:8px}
+.filters{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.selbar{position:fixed;left:0;right:0;bottom:0;background:var(--ink);color:var(--card);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px))}
+.selbar .in{max-width:520px;margin:0 auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.selbar .in span{flex:1 1 100px;font-family:var(--mono)}
+.selbar .btn{min-height:46px;border-color:var(--card);background:transparent;color:var(--card);padding:6px 12px}
+.selbar .btn.primary{background:var(--card);color:var(--ink)}
+
+.bars{display:flex;flex-direction:column;gap:8px}
+.brow{display:grid;grid-template-columns:minmax(84px,34%) 1fr 40px;gap:8px;align-items:center}
+.brow .bl{overflow-wrap:anywhere;line-height:1.2}
+.brow .bt{height:22px;background:repeating-linear-gradient(90deg,transparent 0 calc(25% - 1px),var(--line) calc(25% - 1px) 25%);border-left:1.5px solid var(--ink)}
+.brow .bf{display:block;height:100%;background:var(--ink);min-width:2px}
+.brow:first-child .bf{background:var(--red)}
+.brow .bv{text-align:right}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:8px 4px;border-top:1px solid var(--line);vertical-align:top}
+th{font-size:14px;color:var(--muted);font-weight:600;border-top:0}
+td.n,th.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td:first-child{overflow-wrap:anywhere}
+
+.task{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:4px 8px 4px 4px}
+.task label{display:flex;gap:12px;align-items:center;min-height:52px;padding:6px 8px;cursor:pointer;overflow-wrap:anywhere;min-width:0}
+.task input{width:26px;height:26px;accent-color:var(--green);flex:none}
+.task.done label span{text-decoration:line-through;color:var(--muted)}
+.x{min-width:44px;min-height:44px;border:0;background:none;color:var(--muted);cursor:pointer;font-weight:600;border-radius:8px;padding:0 8px}
+.x.armed{background:var(--red);color:#fffdf8}
+
+.card.tc{gap:0}
+.tc .ln{display:grid;grid-template-columns:1fr auto;gap:10px;padding:8px 0;border-top:1px dashed var(--line);font-family:var(--mono)}
+.tc .ln:first-child{border-top:0}
+.kv{display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:baseline}
+.kv dt{color:var(--muted)} .kv dd{margin:0;font-family:var(--mono);text-align:right;text-wrap:balance}
+dl{margin:0}
+
+.refs{display:flex;flex-wrap:wrap;gap:8px}
+.ref{position:relative;width:64px;height:64px}
+.ref img{width:64px;height:64px;object-fit:cover;border-radius:6px;border:1px solid var(--line)}
+.ref button{position:absolute;right:-6px;top:-6px;width:28px;height:28px;border-radius:50%;border:1.5px solid var(--ink);background:var(--card);cursor:pointer;font-weight:700;line-height:1;padding:0}
+.ref button.armed{background:var(--red);border-color:var(--red);color:#fffdf8}
+.dcard{border-top:1px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:8px}
+.dcard:first-of-type{border-top:0;padding-top:0}
+
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--card);padding:10px 16px;border-radius:8px;max-width:calc(100% - 32px);text-align:center;z-index:30;font-weight:600}
+.toast[hidden]{display:none}
+.wrap[hidden]{display:none}
+.lock{position:fixed;inset:0;z-index:20;background:var(--bg);overflow:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px 16px;text-align:center}
+.lock[hidden]{display:none}
+.lock h2{font-size:30px;font-weight:700}
+.dots{display:flex;gap:12px;min-height:18px}
+.dots i{width:16px;height:16px;border-radius:50%;border:2px solid var(--ink)}
+.dots i.on{background:var(--ink)}
+.lockmsg{min-height:24px;color:var(--red);font-weight:600}
+.pad{display:grid;grid-template-columns:repeat(3,78px);gap:12px}
+.pad button{height:68px;border:1.5px solid var(--ink);border-radius:10px;background:var(--card);font:500 26px var(--mono);cursor:pointer}
+.pad button.fn{font:600 15px var(--font);border-color:var(--line)}
+.pad button:disabled{visibility:hidden}
+.lock .btn{width:258px}
+.center{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}.btn:active{transform:none}}
+</style>
+</head>
+<body>
+<main id="app" class="wrap"><div class="top"><h1>Fehlerbild</h1><p>Wird geladen …</p></div></main>
+<div id="lock" class="lock" hidden></div>
+<div id="toast" class="toast" role="status" hidden></div>
+<script>
+'use strict';
+/* ===== PURE-START: reine Funktionen ohne DOM ===== */
+const SHIFTS=[{id:'F',name:'Frühschicht',time:'06:00–14:00'},{id:'S',name:'Spätschicht',time:'14:00–22:00'},{id:'N',name:'Nachtschicht',time:'22:00–06:00'}];
+function autoShift(d){const h=d.getHours();return h>=6&&h<14?'F':h>=14&&h<22?'S':'N'}
+
+/* Fingerabdruck aus 48x48 RGBA: Farbmittel 8x8 Blöcke + Helligkeit und Kanten im 12x12-Raster, Länge 1 */
+function fingerprint(px){
+  const N=48,lum=new Float32Array(N*N);
+  for(let i=0;i<N*N;i++)lum[i]=(0.299*px[i*4]+0.587*px[i*4+1]+0.114*px[i*4+2])/255;
+  const col=new Float32Array(192);
+  for(let by=0;by<8;by++)for(let bx=0;bx<8;bx++){
+    let r=0,g=0,b=0;
+    for(let y=0;y<6;y++)for(let x=0;x<6;x++){const i=((by*6+y)*N+bx*6+x)*4;r+=px[i];g+=px[i+1];b+=px[i+2]}
+    const k=(by*8+bx)*3;col[k]=r/9180;col[k+1]=g/9180;col[k+2]=b/9180;
+  }
+  const bri=new Float32Array(144),edg=new Float32Array(144);
+  for(let cy=0;cy<12;cy++)for(let cx=0;cx<12;cx++){
+    let s=0,e=0;
+    for(let y=0;y<4;y++)for(let x=0;x<4;x++){
+      const X=cx*4+x,Y=cy*4+y,v=lum[Y*N+X];
+      s+=v;e+=Math.abs(lum[Y*N+Math.min(N-1,X+1)]-v)+Math.abs(lum[Math.min(N-1,Y+1)*N+X]-v);
+    }
+    bri[cy*12+cx]=s/16;edg[cy*12+cx]=e/16;
+  }
+  const out=new Float32Array(480);
+  // jede Gruppe um ihren Mittelwert zentrieren, damit gleich helle Fotos nicht automatisch ähnlich sind
+  const place=(src,off,w,step)=>{
+    for(let c=0;c<step;c++){let m=0,n=0;for(let i=c;i<src.length;i+=step){m+=src[i];n++}m/=n;for(let i=c;i<src.length;i+=step)src[i]-=m}
+    let q=0;for(let i=0;i<src.length;i++)q+=src[i]*src[i];q=Math.sqrt(q);
+    if(q>1e-6)for(let i=0;i<src.length;i++)out[off+i]=src[i]/q*w;
+  };
+  place(col,0,Math.sqrt(.4),3);place(bri,192,Math.sqrt(.3),1);place(edg,336,Math.sqrt(.3),1);
+  let q=0;for(let i=0;i<480;i++)q+=out[i]*out[i];q=Math.sqrt(q);
+  if(q>1e-6)for(let i=0;i<480;i++)out[i]/=q;
+  return out;
+}
+function dot(a,b){let s=0;for(let i=0;i<a.length;i++)s+=a[i]*b[i];return s}
+function pct(sim){return Math.max(0,Math.min(100,Math.round(sim*100)))}
+function verdict(sim){return sim==null?'none':sim>=.86?'sure':sim>=.74?'chk':'unsure'}
+
+const CRC_T=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function crc32(u){let c=0xFFFFFFFF;for(let i=0;i<u.length;i++)c=CRC_T[(c^u[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0}
+/* ZIP ohne Kompression (Fotos sind schon komprimiert) */
+function makeZip(files){
+  const enc=new TextEncoder(),parts=[],central=[];let off=0;
+  for(const f of files){
+    const nm=enc.encode(f.name),crc=crc32(f.data),d=f.date||new Date();
+    const time=(d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1),date=((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate();
+    const lh=new DataView(new ArrayBuffer(30));
+    lh.setUint32(0,0x04034b50,true);lh.setUint16(4,20,true);lh.setUint16(6,0x0800,true);lh.setUint16(10,time,true);lh.setUint16(12,date,true);
+    lh.setUint32(14,crc,true);lh.setUint32(18,f.data.length,true);lh.setUint32(22,f.data.length,true);lh.setUint16(26,nm.length,true);
+    parts.push(new Uint8Array(lh.buffer),nm,f.data);
+    const ch=new DataView(new ArrayBuffer(46));
+    ch.setUint32(0,0x02014b50,true);ch.setUint16(4,20,true);ch.setUint16(6,20,true);ch.setUint16(8,0x0800,true);ch.setUint16(12,time,true);ch.setUint16(14,date,true);
+    ch.setUint32(16,crc,true);ch.setUint32(20,f.data.length,true);ch.setUint32(24,f.data.length,true);ch.setUint16(28,nm.length,true);ch.setUint32(42,off,true);
+    central.push(new Uint8Array(ch.buffer),nm);off+=30+nm.length+f.data.length;
+  }
+  const cd=central.reduce((a,p)=>a+p.length,0),end=new DataView(new ArrayBuffer(22));
+  end.setUint32(0,0x06054b50,true);end.setUint16(8,files.length,true);end.setUint16(10,files.length,true);end.setUint32(12,cd,true);end.setUint32(16,off,true);
+  return [...parts,...central,new Uint8Array(end.buffer)];
+}
+function csvCell(v){v=String(v==null?'':v);return /[;"\r\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}
+function toCsv(rows){return '﻿'+rows.map(r=>r.map(csvCell).join(';')).join('\r\n')+'\r\n'}
+function mondayStart(d){const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()-((x.getDay()+6)%7));return x.getTime()}
+function isoWeek(d){const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));const n=t.getUTCDay()||7;t.setUTCDate(t.getUTCDate()+4-n);const y=new Date(Date.UTC(t.getUTCFullYear(),0,1));return Math.ceil(((t-y)/864e5+1)/7)}
+/* gearbeitete Zeit aus Kommen/Gehen-Stempeln im Fenster [from,to] */
+function workedMs(stamps,from,to){
+  let ms=0,open=null;
+  for(const s of stamps.slice().sort((a,b)=>a.ts-b.ts)){
+    if(s.type==='in'){if(open===null)open=s.ts}
+    else if(open!==null){ms+=Math.max(0,Math.min(s.ts,to)-Math.max(open,from));open=null}
+  }
+  if(open!==null)ms+=Math.max(0,to-Math.max(open,from));
+  return ms;
+}
+function fmtDur(ms){const m=Math.floor(ms/6e4);return Math.floor(m/60)+' h '+String(m%60).padStart(2,'0')+' min'}
+function safeName(s){return String(s).trim().replace(/[^A-Za-z0-9äöüÄÖÜß-]+/g,'_').replace(/^_+|_+$/g,'')||'x'}
+/* ===== PURE-END ===== */
+
+const DEFECTS=['Kratzer','Delle','Riss','Verfärbung','Grat','Verschmutzung','Maßabweichung','Fehlstelle'];
+const STATUS={laeuft:{name:'Läuft',cls:'st-run'},pruefung:{name:'In Prüfung',cls:'st-chk'},wartung:{name:'Wartung',cls:'st-mnt'},stoerung:{name:'Störung',cls:'st-err'},stillstand:{name:'Stillstand',cls:'st-stop'}};
+const needsAttention=m=>m.status==='stoerung'||m.status==='stillstand';
+
+const $=(s,r)=>(r||document).querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+const p2=n=>String(n).padStart(2,'0');
+const fmtDate=ts=>new Date(ts).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});
+const fmtTime=ts=>new Date(ts).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+const startOfDay=()=>{const d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime()};
+const fmtSince=ts=>ts>=startOfDay()?fmtTime(ts)+' Uhr':new Date(ts).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})+' '+fmtTime(ts)+' Uhr';
+const stampName=ts=>{const d=new Date(ts);return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate())+'_'+p2(d.getHours())+'-'+p2(d.getMinutes())+'-'+p2(d.getSeconds())};
+const shiftName=id=>(SHIFTS.find(s=>s.id===id)||{name:'–'}).name;
+const ICON={
+  cam:'<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
+  grid:'<rect x="4" y="4" width="7" height="7"/><rect x="13" y="4" width="7" height="7"/><rect x="4" y="13" width="7" height="7"/><rect x="13" y="13" width="7" height="7"/>',
+  bars:'<path d="M4 20h16M7 20v-8M12 20V5M17 20v-5"/>',
+  list:'<path d="M4 7l2 2 3-4M4 16l2 2 3-4M13 7h7M13 16h7"/>',
+  clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.5 2"/>',
+  set:'<path d="M4 7h9M18 7h2M4 17h2M11 17h9"/><circle cx="15.5" cy="7" r="2.3"/><circle cx="8.5" cy="17" r="2.3"/>',
+  fab:'<path d="M3 20h18M5 20V10l5 3v-3l5 3V5h4v15"/>'
+};
+const ico=n=>'<svg viewBox="0 0 24 24" aria-hidden="true">'+ICON[n]+'</svg>';
+
+/* ===== Speicher: IndexedDB, bei Verweigerung nur Arbeitsspeicher ===== */
+const STORES=['kv','products','defects','refs','checks','images','tasks','stamps','machines'];
+const Store={
+  db:null,mem:null,
+  async open(){
+    try{
+      this.db=await new Promise((res,rej)=>{
+        const r=indexedDB.open('fehlerbild',1);
+        r.onupgradeneeded=()=>{const d=r.result;for(const s of STORES)if(!d.objectStoreNames.contains(s))d.createObjectStore(s,{keyPath:'id'})};
+        r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);r.onblocked=()=>rej(new Error('blocked'));
+        setTimeout(()=>rej(new Error('timeout')),5000);
+      });
+    }catch(e){this.db=null;this.mem={};for(const s of STORES)this.mem[s]=new Map()}
+  },
+  tx(store,mode,fn){
+    return new Promise((res,rej)=>{
+      const t=this.db.transaction(store,mode),rq=fn(t.objectStore(store));let out;
+      if(rq)rq.onsuccess=()=>{out=rq.result};
+      t.oncomplete=()=>res(out);t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error||new Error('abort'));
+    });
+  },
+  all(s){return this.db?this.tx(s,'readonly',o=>o.getAll()):Promise.resolve([...this.mem[s].values()])},
+  get(s,id){return this.db?this.tx(s,'readonly',o=>o.get(id)):Promise.resolve(this.mem[s].get(id))},
+  put(s,v){return this.db?this.tx(s,'readwrite',o=>{o.put(v)}):Promise.resolve(void this.mem[s].set(v.id,v))},
+  del(s,id){return this.db?this.tx(s,'readwrite',o=>{o.delete(id)}):Promise.resolve(void this.mem[s].delete(id))},
+  clear(s){return this.db?this.tx(s,'readwrite',o=>{o.clear()}):Promise.resolve(void this.mem[s].clear())}
+};
+async function save(store,obj){
+  try{await Store.put(store,obj)}
+  catch(e){toast('Speichern fehlgeschlagen. Ist der Speicher des Geräts voll?');throw e}
+}
+
+const S={kv:{},products:[],defects:[],refs:[],checks:[],tasks:[],stamps:[],machines:[]};
+async function setKv(k,v){S.kv[k]=v;await save('kv',{id:k,value:v})}
+const prod=id=>S.products.find(p=>p.id===id);
+const def=id=>S.defects.find(d=>d.id===id);
+const defsOf=pid=>S.defects.filter(d=>d.productId===pid);
+const refsOf=did=>S.refs.filter(r=>r.defectId===did);
+const label=(pid,did)=>((prod(pid)||{}).name||'?')+' · '+((def(did)||{}).name||'?');
+
+async function addProduct(name){
+  const p={id:uid(),name,pos:Date.now()+S.products.length};
+  S.products.push(p);await save('products',p);
+  for(let i=0;i<DEFECTS.length;i++){const d={id:uid(),productId:p.id,name:DEFECTS[i],pos:i};S.defects.push(d);await save('defects',d)}
+  return p;
+}
+async function seed(){
+  for(let i=1;i<=4;i++)await addProduct('Produkt '+i);
+  await setKv('seeded',true);
+}
+async function delChecks(fn){
+  const gone=S.checks.filter(fn);S.checks=S.checks.filter(c=>!fn(c));
+  for(const c of gone){await Store.del('checks',c.id);await Store.del('images',c.id)}
+}
+async function delRefs(fn){
+  const gone=S.refs.filter(fn);S.refs=S.refs.filter(r=>!fn(r));
+  for(const r of gone)await Store.del('refs',r.id);
+}
+async function delDefect(id){
+  await delRefs(r=>r.defectId===id);await delChecks(c=>c.defectId===id);
+  S.defects=S.defects.filter(d=>d.id!==id);await Store.del('defects',id);
+}
+async function delProduct(id){
+  for(const d of defsOf(id))await delDefect(d.id);
+  S.products=S.products.filter(p=>p.id!==id);await Store.del('products',id);
+}
+async function addRef(productId,defectId,vec,thumb){
+  const r={id:uid(),productId,defectId,vec:Array.from(vec),thumb,ts:Date.now()};
+  S.refs.push(r);await save('refs',r);return r;
+}
+
+/* ===== Schicht ===== */
+function manualShift(){const o=S.kv.shiftOverride;return o&&o.auto===autoShift(new Date())&&Date.now()-o.at<9*36e5?o.shift:null}
+function currentShift(){return manualShift()||autoShift(new Date())}
+
+/* ===== Bilder ===== */
+function loadImage(src){
+  return new Promise((res,rej)=>{
+    const url=typeof src==='string'?src:URL.createObjectURL(src),im=new Image();
+    const done=()=>{if(typeof src!=='string')URL.revokeObjectURL(url)};
+    im.onload=()=>{res({im,done})};
+    im.onerror=()=>{done();rej(new Error('Bild konnte nicht gelesen werden'))};
+    im.src=url;
+  });
+}
+function draw(im,w,h,sx,sy,sw,sh){
+  const c=document.createElement('canvas');c.width=w;c.height=h;
+  const x=c.getContext('2d',{willReadFrequently:true});x.fillStyle='#fff';x.fillRect(0,0,w,h);
+  x.drawImage(im,sx,sy,sw,sh,0,0,w,h);return c;
+}
+async function analyse(src){
+  const {im,done}=await loadImage(src);
+  try{
+    const W=im.naturalWidth,H=im.naturalHeight;
+    const vec=fingerprint(draw(im,48,48,0,0,W,H).getContext('2d').getImageData(0,0,48,48).data);
+    const k=Math.min(1,480/Math.max(W,H));
+    const thumb=draw(im,Math.max(1,Math.round(W*k)),Math.max(1,Math.round(H*k)),0,0,W,H).toDataURL('image/jpeg',.72);
+    return {vec,thumb};
+  }finally{done()}
+}
+async function squareImage(file,size){
+  const {im,done}=await loadImage(file);
+  try{const W=im.naturalWidth,H=im.naturalHeight,s=Math.min(W,H);return draw(im,size,size,(W-s)/2,(H-s)/2,s,s).toDataURL('image/jpeg',.8)}
+  finally{done()}
+}
+function dataUrlBytes(u){const b=atob(u.split(',')[1]),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a}
+function matches(vec){
+  const best=new Map();
+  for(const r of S.refs){const s=dot(vec,r.vec),b=best.get(r.defectId);if(!b||s>b.sim)best.set(r.defectId,{productId:r.productId,defectId:r.defectId,sim:s})}
+  return [...best.values()].sort((a,b)=>b.sim-a.sim);
+}
+
+/* ===== Downloads: nur wenn der Nutzer tippt ===== */
+async function saveFile(filename,data){
+  let cap=null;
+  try{if(window.claude&&window.claude.use)cap=await window.claude.use('downloads')}catch(e){}
+  if(cap){
+    try{await cap.save({filename,data});toast('Datei übergeben: '+filename)}
+    catch(e){const c=e&&e.code;toast(c==='declined'?'Download abgebrochen.':c==='rate_limited'?'Bitte kurz warten und noch einmal tippen.':'Download ist hier gerade nicht möglich.')}
+    return;
+  }
+  try{
+    const u=URL.createObjectURL(data instanceof Blob?data:new Blob([data]));
+    const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(u),5000);toast('Download gestartet: '+filename);
+  }catch(e){toast('Download ist hier nicht möglich.')}
+}
+function checksCsv(list){
+  const rows=[['Datum','Uhrzeit','Schicht','Produkt','Fehlerart','Ähnlichkeit','Korrigiert','Notiz']];
+  for(const c of list.slice().sort((a,b)=>a.ts-b.ts))rows.push([fmtDate(c.ts),fmtTime(c.ts),shiftName(c.shift),(prod(c.productId)||{}).name,(def(c.defectId)||{}).name,c.sim==null?'':c.sim+' %',c.corrected?'Ja':'Nein',c.note||'']);
+  return toCsv(rows);
+}
+
+/* ===== Navigation ===== */
+let V={name:'start'};const stack=[];let liveUrl=null;
+function render(){
+  if(liveUrl){URL.revokeObjectURL(liveUrl);liveUrl=null}
+  $('#app').innerHTML=(VIEWS[V.name]||VIEWS.start)();
+  if(AFTER[V.name])AFTER[V.name]();
+}
+function go(name,p){stack.push(V);V=Object.assign({name},p||{});render();window.scrollTo(0,0)}
+function back(){V=stack.pop()||{name:'start'};render();window.scrollTo(0,0)}
+let toastT;
+function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{t.hidden=true},3200)}
+const bar=t=>'<div class="bar"><button class="backbtn" data-act="back">‹ Zurück</button><h2>'+esc(t)+'</h2></div>';
+const opts=(list,sel,ph)=>(ph!=null?'<option value="">'+esc(ph)+'</option>':'')+list.map(o=>'<option value="'+esc(o.id)+'"'+(o.id===sel?' selected':'')+'>'+esc(o.name)+'</option>').join('');
+const avatar=(m,lg)=>'<span class="ava '+(lg?'lg ':'')+STATUS[m.status].cls+'">'+(m.image?'<img src="'+m.image+'" alt="">':esc((m.name||'?').trim().slice(0,2).toUpperCase()))+'</span>';
+const pill=st=>'<span class="pill '+STATUS[st].cls+'">'+STATUS[st].name+'</span>';
+const isIn=()=>{const l=S.stamps[S.stamps.length-1];return !!l&&l.type==='in'};
+const sortedMachines=()=>S.machines.slice().sort((a,b)=>(needsAttention(b)-needsAttention(a))||a.name.localeCompare(b.name,'de'));
+
+const VIEWS={},AFTER={},ACT={},CHG={},INP={},SUB={};
+
+/* ----- Startseite ----- */
+function clockHtml(){const d=new Date();return p2(d.getHours())+':'+p2(d.getMinutes())+'<small>:'+p2(d.getSeconds())+'</small>'}
+VIEWS.start=()=>{
+  const d=new Date(),sh=currentShift(),man=manualShift(),today=startOfDay();
+  const nToday=S.checks.filter(c=>c.ts>=today).length,open=S.tasks.filter(t=>!t.done).length,inn=isIn();
+  const att=S.machines.filter(needsAttention).length;
+  V.shown=sh;
+  const ms=sortedMachines();
+  return `
+  <header class="top"><h1>Fehlerbild</h1><p>Alles bleibt auf diesem Gerät.</p></header>
+  ${Store.db?'':'<div class="note red"><strong>Kein dauerhafter Speicher</strong><span>Dieser Browser erlaubt hier kein Speichern. Einträge gehen verloren, sobald du die Seite schließt.</span></div>'}
+  <section class="card">
+    <div class="rowhead"><div class="clock mono" id="clock">${clockHtml()}</div><div class="muted" style="text-align:right">${esc(d.toLocaleDateString('de-DE',{weekday:'long'}))}<br>${esc(d.toLocaleDateString('de-DE',{day:'numeric',month:'long',year:'numeric'}))}</div></div>
+    <div class="seg" role="group" aria-label="Schicht">${SHIFTS.map(s=>`<button data-act="shift" data-id="${s.id}" aria-pressed="${s.id===sh}">${s.name.replace('schicht','')}</button>`).join('')}</div>
+    <div class="rowhead small"><span><strong>${shiftName(sh)}</strong> <span class="mono">${SHIFTS.find(s=>s.id===sh).time}</span></span>${man?'<button class="link" data-act="shift" data-id="">Automatisch</button>':'<span class="muted">automatisch</span>'}</div>
+  </section>
+  <section class="card">
+    <div class="rowhead"><h3>Anlagenstatus</h3><button class="link" data-act="go" data-v="anlagen">Verwalten</button></div>
+    ${ms.length?(att?`<p class="small" style="color:var(--red);font-weight:600">${att} ${att===1?'Anlage braucht':'Anlagen brauchen'} Aufmerksamkeit</p>`:'')+'<div>'+ms.map(m=>`<button class="mrow" data-act="machine" data-id="${m.id}">${avatar(m)}<span><span class="nm">${esc(m.name)}</span>${m.place?`<br><span class="muted small">${esc(m.place)}</span>`:''}</span>${pill(m.status)}</button>`).join('')+'</div>'
+      :'<p class="muted">Noch keine Anlage angelegt. Lege deine Maschinen an, dann siehst du hier ihren Status.</p><button class="btn quiet" data-act="newmachine">Anlage anlegen</button>'}
+  </section>
+  ${S.refs.length?'':'<div class="note"><strong>Noch keine Referenzfotos</strong><span>Lege zuerst Vorlagen an. Ohne Vorlage je Fehlerart gibt es keinen Vorschlag.</span><button class="btn sm" data-act="go" data-v="einstellungen">Vorlagen anlegen</button></div>'}
+  <nav class="tiles" aria-label="Bereiche">
+    <button class="tile wide" data-act="go" data-v="foto">${ico('cam')}<span class="tl">Neues Foto</span></button>
+    <button class="tile" data-act="go" data-v="galerie"><span class="tt">${ico('grid')}<span class="cnt">${nToday} heute</span></span><span class="tl">Galerie</span></button>
+    <button class="tile" data-act="go" data-v="auswertung"><span class="tt">${ico('bars')}<span class="cnt">${S.checks.length} gesamt</span></span><span class="tl">Auswertung</span></button>
+    <button class="tile" data-act="go" data-v="aufgaben"><span class="tt">${ico('list')}<span class="cnt${open?' hot':''}">${open} offen</span></span><span class="tl">Aufgaben</span></button>
+    <button class="tile" data-act="go" data-v="stempeluhr"><span class="tt">${ico('clock')}<span class="cnt${inn?' on':''}">${inn?'eingestempelt':'nicht eingestempelt'}</span></span><span class="tl">Stempeluhr</span></button>
+    <button class="tile" data-act="go" data-v="anlagen"><span class="tt">${ico('fab')}<span class="cnt${att?' hot':''}">${S.machines.length}${att?' · '+att+' rot':''}</span></span><span class="tl">Anlagen</span></button>
+    <button class="tile" data-act="go" data-v="einstellungen"><span class="tt">${ico('set')}<span class="cnt">${S.refs.length} Vorlagen</span></span><span class="tl">Einstellungen</span></button>
+  </nav>`;
+};
+ACT.go=el=>go(el.dataset.v);
+ACT.back=()=>back();
+ACT.shift=async el=>{
+  const id=el.dataset.id,auto=autoShift(new Date());
+  await setKv('shiftOverride',id&&id!==auto?{shift:id,auto,at:Date.now()}:null);render();
+};
+
+/* ----- Neues Foto ----- */
+const pickHtml=()=>`<div class="btnrow">
+  <label class="btn primary big">${ico('cam')}Kamera<input class="vh" type="file" accept="image/*" capture="environment" data-chg="photo" id="in-cam"></label>
+  <label class="btn big">${ico('grid')}Aus Galerie<input class="vh" type="file" accept="image/*" data-chg="photo" id="in-gal"></label></div>`;
+function refDefault(d){const sug=d.suggestion;return !!d.defectId&&(!refsOf(d.defectId).length||!!(sug&&sug.defectId!==d.defectId))}
+VIEWS.foto=()=>{
+  if(V.stage==='busy')return bar('Neues Foto')+'<div class="card center"><p>Foto wird verglichen …</p></div>';
+  if(V.stage!=='result')return bar('Neues Foto')+`
+    ${V.saved?`<div class="card"><span class="stamp sure" style="align-self:flex-start">Gespeichert</span><p>${esc(V.saved)}</p></div>`:''}
+    ${pickHtml()}
+    <p class="muted small">Das Foto wird nur auf diesem Gerät mit deinen Referenzfotos verglichen. Das ist Bildähnlichkeit, keine echte Fehlererkennung.</p>
+    ${V.saved?'<button class="btn quiet" data-act="go" data-v="galerie">Zur Galerie</button>':''}`;
+  const d=V.d,top=d.matches[0],v=verdict(top?top.sim:null);
+  const vt={sure:'Sicherer Treffer',chk:'Bitte kurz prüfen',unsure:'Unsicher — bitte wählen',none:'Keine Vorlage'}[v];
+  const noRefYet=d.defectId&&!refsOf(d.defectId).length;
+  return bar('Zuordnung')+`
+  <div class="photo"><img src="${d.thumb}" alt="Aufgenommenes Foto"><span class="stamp ${v}">${vt}</span></div>
+  <section class="card">
+    ${top?`<div class="simline"><span class="simbig">${pct(top.sim)} %</span><span>Bester Treffer: <strong>${esc(label(top.productId,top.defectId))}</strong></span></div>
+      <div class="chips" role="group" aria-label="Treffer und Alternativen">${d.matches.slice(0,4).map(m=>`<button class="chip" data-act="pickalt" data-id="${m.defectId}" aria-pressed="${m.defectId===d.defectId}">${esc(label(m.productId,m.defectId))}<b>${pct(m.sim)} %</b></button>`).join('')}</div>`
+      :'<p>Es gibt noch kein Referenzfoto. Wähle Produkt und Fehlerart selbst. Dieses Foto wird dann zur ersten Vorlage.</p>'}
+  </section>
+  <section class="card">
+    <label class="field"><span>Produkt</span><select id="d-prod" data-chg="dprod">${opts(S.products,d.productId,'Bitte wählen')}</select></label>
+    <label class="field"><span>Fehlerart</span><select id="d-def" data-chg="ddef"${d.productId?'':' disabled'}>${opts(d.productId?defsOf(d.productId):[],d.defectId,d.productId?'Bitte wählen':'Zuerst Produkt wählen')}</select></label>
+    <label class="field"><span>Schicht</span><select id="d-shift" data-chg="dshift">${opts(SHIFTS,d.shift)}</select></label>
+    <label class="field"><span>Notiz</span><textarea id="d-note" data-inp="dnote" placeholder="optional">${esc(d.note)}</textarea></label>
+    <label class="check"><input type="checkbox" id="d-ref" data-chg="dref"${d.asRef?' checked':''}><span>Als Referenz merken<br><span class="muted small">${noRefYet?'Für diese Fehlerart gibt es noch keine Vorlage.':'Das Foto dient künftig als Vorlage für diese Fehlerart.'}</span></span></label>
+  </section>
+  <div class="btnrow"><button class="btn primary big" data-act="savecheck">Speichern</button><button class="btn big quiet" data-act="discard">Verwerfen</button></div>`;
+};
+CHG.photo=async el=>{
+  const file=el.files&&el.files[0];if(!file)return;
+  V.stage='busy';V.saved=null;render();
+  try{
+    const {vec,thumb}=await analyse(file),ms=matches(vec),top=ms[0];
+    const sug=top&&top.sim>=.74?top:null;
+    const d={blob:file,vec,thumb,matches:ms,suggestion:sug,productId:sug?sug.productId:'',defectId:sug?sug.defectId:'',shift:currentShift(),note:'',ts:Date.now(),refTouched:false};
+    d.asRef=refDefault(d);V.d=d;V.stage='result';
+  }catch(e){V.stage='pick';toast('Das Bild konnte nicht gelesen werden.')}
+  render();window.scrollTo(0,0);
+};
+const syncRef=d=>{if(!d.refTouched)d.asRef=refDefault(d)};
+ACT.pickalt=el=>{const d=V.d,m=d.matches.find(x=>x.defectId===el.dataset.id);if(!m)return;d.productId=m.productId;d.defectId=m.defectId;syncRef(d);render()};
+CHG.dprod=el=>{const d=V.d;d.productId=el.value;d.defectId='';syncRef(d);render()};
+CHG.ddef=el=>{const d=V.d;d.defectId=el.value;syncRef(d);render()};
+CHG.dshift=el=>{V.d.shift=el.value};
+INP.dnote=el=>{V.d.note=el.value};
+CHG.dref=el=>{V.d.asRef=el.checked;V.d.refTouched=true};
+ACT.discard=()=>{V.stage='pick';V.d=null;render()};
+ACT.savecheck=async()=>{
+  const d=V.d;if(!d.productId||!d.defectId){toast('Bitte Produkt und Fehlerart wählen.');return}
+  const top=d.matches[0],sug=d.suggestion;
+  const c={id:uid(),productId:d.productId,defectId:d.defectId,ts:d.ts,shift:d.shift,sim:top?pct(top.sim):null,corrected:!!(sug&&sug.defectId!==d.defectId),note:d.note.trim(),thumb:d.thumb};
+  await save('images',{id:c.id,buf:await d.blob.arrayBuffer(),type:d.blob.type||'image/jpeg'});
+  await save('checks',c);S.checks.unshift(c);
+  if(d.asRef)await addRef(c.productId,c.defectId,d.vec,d.thumb);
+  V.stage='pick';V.d=null;V.saved=label(c.productId,c.defectId)+' um '+fmtTime(c.ts)+' Uhr'+(d.asRef?', zusätzlich als Vorlage':'');
+  render();window.scrollTo(0,0);
+};
+
+/* ----- Galerie ----- */
+const filtered=()=>S.checks.filter(c=>(!V.fp||c.productId===V.fp)&&(!V.fs||c.shift===V.fs));
+const filterHtml=()=>`<div class="filters">
+  <label class="field"><span>Produkt</span><select id="f-prod" data-chg="filter" data-key="fp">${opts(S.products,V.fp,'Alle Produkte')}</select></label>
+  <label class="field"><span>Schicht</span><select id="f-shift" data-chg="filter" data-key="fs">${opts(SHIFTS,V.fs,'Alle Schichten')}</select></label></div>`;
+CHG.filter=el=>{V[el.dataset.key]=el.value;if(V.sel)V.sel=new Set();render()};
+VIEWS.galerie=()=>{
+  const list=filtered(),lim=V.limit||60,sel=V.sel;
+  return bar('Galerie')+filterHtml()+`
+  <div class="rowhead"><span class="muted">${list.length} ${list.length===1?'Foto':'Fotos'}, neueste zuerst</span>${list.length?`<button class="link" data-act="selmode">${sel?'Auswahl beenden':'Auswählen'}</button>`:''}</div>
+  ${list.length?'<div class="list">'+list.slice(0,lim).map(c=>`<button class="grow${sel&&sel.has(c.id)?' sel':''}" data-act="entry" data-id="${c.id}"${sel?` aria-pressed="${sel.has(c.id)}"`:''}>
+      <img src="${c.thumb}" alt="" loading="lazy"><span><span class="t">${esc(label(c.productId,c.defectId))}</span><br><span class="muted small">${fmtDate(c.ts)} · ${fmtTime(c.ts)} · ${shiftName(c.shift)}</span>${c.corrected?' <span class="tag">korrigiert</span>':''}</span>
+      <span class="r">${c.sim==null?'–':c.sim+' %'}</span></button>`).join('')+'</div>'
+    :'<div class="card"><p class="muted">Hier ist noch nichts. Mach ein Foto, dann erscheint es hier.</p><button class="btn primary" data-act="go" data-v="foto">Neues Foto</button></div>'}
+  ${list.length>lim?'<button class="btn quiet" data-act="more">Mehr anzeigen</button>':''}
+  ${sel?`<div class="selbar"><div class="in"><span>${sel.size} gewählt</span><button class="btn" data-act="selall">Alle</button><button class="btn primary" data-act="zip">Als ZIP exportieren</button></div></div>`:''}`;
+};
+ACT.more=()=>{V.limit=(V.limit||60)+60;render()};
+ACT.selmode=()=>{V.sel=V.sel?null:new Set();render()};
+ACT.selall=()=>{const l=filtered();V.sel=V.sel.size===l.length?new Set():new Set(l.map(c=>c.id));render()};
+ACT.entry=el=>{
+  const id=el.dataset.id;
+  if(V.sel){V.sel.has(id)?V.sel.delete(id):V.sel.add(id);render();return}
+  const c=S.checks.find(x=>x.id===id);if(c)go('eintrag',{id,e:{productId:c.productId,defectId:c.defectId,shift:c.shift,note:c.note||''}});
+};
+async function originalBlob(c){
+  try{const r=await Store.get('images',c.id);if(r&&r.buf)return new Blob([r.buf],{type:r.type||'image/jpeg'})}catch(e){}
+  return new Blob([dataUrlBytes(c.thumb)],{type:'image/jpeg'});
+}
+ACT.zip=async()=>{
+  const list=S.checks.filter(c=>V.sel.has(c.id));if(!list.length){toast('Bitte zuerst Fotos auswählen.');return}
+  toast('ZIP wird erstellt …');
+  const files=[],used=new Set(),EXT={'image/png':'png','image/webp':'webp','image/heic':'heic','image/heif':'heif','image/gif':'gif'};
+  for(const c of list){
+    const b=await originalBlob(c),base=safeName((prod(c.productId)||{}).name)+'_'+safeName((def(c.defectId)||{}).name)+'_'+stampName(c.ts);
+    let name=base,i=2;while(used.has(name))name=base+'_'+i++;used.add(name);
+    files.push({name:name+'.'+(EXT[b.type]||'jpg'),data:new Uint8Array(await b.arrayBuffer()),date:new Date(c.ts)});
+  }
+  await saveFile('fehlerbild_'+stampName(Date.now())+'.zip',new Blob(makeZip(files),{type:'application/zip'}));
+};
+
+/* ----- Eintrag ----- */
+VIEWS.eintrag=()=>{
+  const c=S.checks.find(x=>x.id===V.id);if(!c)return bar('Eintrag')+'<p class="muted">Dieser Eintrag existiert nicht mehr.</p>';
+  const e=V.e;
+  return bar('Eintrag')+`
+  <div class="photo"><img id="entryimg" src="${c.thumb}" alt="${esc(label(c.productId,c.defectId))}"></div>
+  <section class="card"><dl class="kv">
+    <dt>Datum</dt><dd>${fmtDate(c.ts)} ${fmtTime(c.ts)}</dd>
+    <dt>Ähnlichkeit</dt><dd>${c.sim==null?'–':c.sim+' %'}</dd>
+    <dt>Korrigiert</dt><dd>${c.corrected?'Ja':'Nein'}</dd></dl></section>
+  <section class="card">
+    <label class="field"><span>Produkt</span><select id="e-prod" data-chg="eprod">${opts(S.products,e.productId)}</select></label>
+    <label class="field"><span>Fehlerart</span><select id="e-def" data-chg="edef">${opts(defsOf(e.productId),e.defectId,e.defectId?null:'Bitte wählen')}</select></label>
+    <label class="field"><span>Schicht</span><select id="e-shift" data-chg="eshift">${opts(SHIFTS,e.shift)}</select></label>
+    <label class="field"><span>Notiz</span><textarea id="e-note" data-inp="enote">${esc(e.note)}</textarea></label>
+    <button class="btn primary" data-act="saveentry">Änderung speichern</button>
+  </section>
+  <div class="btnrow"><button class="btn" data-act="refentry">Als Referenz merken</button><button class="btn danger" data-act="delentry" data-confirm="Wirklich löschen?">Löschen</button></div>`;
+};
+AFTER.eintrag=async()=>{
+  const id=V.id,c=S.checks.find(x=>x.id===id);if(!c)return;
+  try{const r=await Store.get('images',id);if(r&&r.buf&&V.name==='eintrag'&&V.id===id){const img=$('#entryimg');if(img){liveUrl=URL.createObjectURL(new Blob([r.buf],{type:r.type||'image/jpeg'}));img.src=liveUrl}}}catch(e){}
+};
+CHG.eprod=el=>{V.e.productId=el.value;V.e.defectId='';render()};
+CHG.edef=el=>{V.e.defectId=el.value};
+CHG.eshift=el=>{V.e.shift=el.value};
+INP.enote=el=>{V.e.note=el.value};
+ACT.saveentry=async()=>{
+  const c=S.checks.find(x=>x.id===V.id),e=V.e;if(!c)return;
+  if(!e.defectId){toast('Bitte eine Fehlerart wählen.');return}
+  if(c.productId!==e.productId||c.defectId!==e.defectId)c.corrected=true;
+  c.productId=e.productId;c.defectId=e.defectId;c.shift=e.shift;c.note=e.note.trim();
+  await save('checks',c);toast('Gespeichert.');render();
+};
+ACT.refentry=async()=>{
+  const c=S.checks.find(x=>x.id===V.id);if(!c)return;
+  const {vec,thumb}=await analyse(await originalBlob(c));
+  await addRef(c.productId,c.defectId,vec,thumb);toast('Als Vorlage für „'+label(c.productId,c.defectId)+'“ gemerkt.');
+};
+ACT.delentry=async()=>{const id=V.id;await delChecks(c=>c.id===id);toast('Gelöscht.');back()};
+
+/* ----- Auswertung ----- */
+const PERIODS=[['heute','Heute'],['7','7 Tage'],['30','30 Tage'],['alle','Alles']];
+function statList(){
+  const p=V.period||'7',from=p==='heute'?startOfDay():p==='alle'?0:Date.now()-Number(p)*864e5;
+  return filtered().filter(c=>c.ts>=from);
+}
+VIEWS.auswertung=()=>{
+  const p=V.period||'7',list=statList(),cnt=new Map();
+  for(const c of list){const n=(def(c.defectId)||{}).name||'?';cnt.set(n,(cnt.get(n)||0)+1)}
+  const rows=[...cnt.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'de')),max=rows.length?rows[0][1]:1;
+  return bar('Auswertung')+`
+  <div class="seg" role="group" aria-label="Zeitraum">${PERIODS.map(([k,n])=>`<button data-act="period" data-id="${k}" aria-pressed="${k===p}">${n}</button>`).join('')}</div>
+  ${filterHtml()}
+  <section class="card"><div class="rowhead"><h3>Häufigste Fehler</h3><span class="mono">${list.length} ${list.length===1?'Prüfung':'Prüfungen'}</span></div>
+    ${rows.length?'<div class="bars">'+rows.slice(0,8).map(([n,v])=>`<div class="brow"><span class="bl">${esc(n)}</span><span class="bt"><span class="bf" style="width:${(v/max*100).toFixed(1)}%"></span></span><span class="bv mono">${v}</span></div>`).join('')+'</div>'
+      :'<p class="muted">Keine Prüfungen in dieser Auswahl.</p>'}
+  </section>
+  ${rows.length?`<section class="card"><h3>Zahlen</h3><table><thead><tr><th>Fehlerart</th><th class="n">Anzahl</th><th class="n">Anteil</th></tr></thead><tbody>
+    ${rows.map(([n,v])=>`<tr><td>${esc(n)}</td><td class="n">${v}</td><td class="n">${Math.round(v/list.length*100)} %</td></tr>`).join('')}</tbody></table></section>
+  <button class="btn" data-act="csvstats">Diese Auswahl als CSV exportieren</button>`:''}`;
+};
+ACT.period=el=>{V.period=el.dataset.id;render()};
+ACT.csvstats=()=>saveFile('fehlerbild_auswertung_'+stampName(Date.now())+'.csv',checksCsv(statList()));
+
+/* ----- Aufgaben ----- */
+VIEWS.aufgaben=()=>{
+  const open=S.tasks.filter(t=>!t.done).sort((a,b)=>b.ts-a.ts),done=S.tasks.filter(t=>t.done).sort((a,b)=>(b.doneAt||0)-(a.doneAt||0));
+  const row=t=>`<div class="task${t.done?' done':''}"><label><input type="checkbox" id="t-${t.id}" data-chg="task" data-id="${t.id}"${t.done?' checked':''}><span>${esc(t.text)}</span></label><button class="x" data-act="deltask" data-id="${t.id}" aria-label="Aufgabe löschen">Löschen</button></div>`;
+  return bar('Aufgaben')+`
+  <form class="inline" data-sub="addtask"><input type="text" id="task-new" name="text" placeholder="Neue Aufgabe" autocomplete="off" aria-label="Neue Aufgabe"><button class="btn primary">Hinzufügen</button></form>
+  ${S.tasks.length?'':'<p class="muted">Noch keine Aufgaben.</p>'}
+  ${open.length?`<h3>Offen <span class="mono muted">${open.length}</span></h3><div class="list">${open.map(row).join('')}</div>`:''}
+  ${done.length?`<h3>Erledigt <span class="mono muted">${done.length}</span></h3><div class="list">${done.map(row).join('')}</div>`:''}`;
+};
+SUB.addtask=async f=>{
+  const text=f.elements.text.value.trim();if(!text)return;
+  const t={id:uid(),text,done:false,ts:Date.now()};S.tasks.push(t);await save('tasks',t);render();const i=$('#task-new');if(i)i.focus();
+};
+CHG.task=async el=>{const t=S.tasks.find(x=>x.id===el.dataset.id);if(!t)return;t.done=el.checked;t.doneAt=t.done?Date.now():null;await save('tasks',t);render()};
+ACT.deltask=async el=>{S.tasks=S.tasks.filter(t=>t.id!==el.dataset.id);await Store.del('tasks',el.dataset.id);render()};
+
+/* ----- Stempeluhr ----- */
+const sinceHtml=()=>{const l=S.stamps[S.stamps.length-1];return isIn()?'seit '+fmtSince(l.ts)+' · '+fmtDur(Date.now()-l.ts):'nicht eingestempelt'};
+VIEWS.stempeluhr=()=>{
+  const now=new Date(),inn=isIn(),today=startOfDay(),ts=S.stamps.filter(s=>s.ts>=today);
+  return bar('Stempeluhr')+`
+  <section class="card">
+    <dl class="kv"><dt>Aktuelle Schicht</dt><dd>${shiftName(currentShift())}</dd>
+    <dt>Status</dt><dd id="since" style="color:${inn?'var(--green)':'var(--muted)'}">${sinceHtml()}</dd></dl>
+    <button class="btn big ${inn?'primary':'green'}" data-act="stamp">${inn?'Gehen':'Kommen'}</button>
+  </section>
+  <section class="card"><dl class="kv">
+    <dt>Heute</dt><dd id="wtoday">${fmtDur(workedMs(S.stamps,today,now.getTime()))}</dd>
+    <dt>Diese Woche (KW ${isoWeek(now)}, ab Montag)</dt><dd id="wweek">${fmtDur(workedMs(S.stamps,mondayStart(now),now.getTime()))}</dd></dl></section>
+  <h3>Stempel heute</h3>
+  ${ts.length?'<section class="card tc">'+ts.map(s=>`<div class="ln"><span>${s.type==='in'?'Kommen':'Gehen'}</span><span>${fmtTime(s.ts)}</span></div>`).join('')+'</section>':'<p class="muted">Heute noch kein Stempel.</p>'}
+  ${S.stamps.length?'<button class="btn quiet" data-act="undostamp" data-confirm="Wirklich rückgängig machen?">Letzten Stempel rückgängig machen</button>':''}
+  <p class="muted small">Die Zeit kommt von der Uhr dieses Geräts. Es wird nichts übertragen.</p>`;
+};
+ACT.stamp=async()=>{const s={id:uid(),type:isIn()?'out':'in',ts:Date.now()};S.stamps.push(s);await save('stamps',s);toast(s.type==='in'?'Eingestempelt um '+fmtTime(s.ts)+' Uhr.':'Ausgestempelt um '+fmtTime(s.ts)+' Uhr.');render()};
+ACT.undostamp=async()=>{const s=S.stamps.pop();if(s)await Store.del('stamps',s.id);render()};
+
+/* ----- Anlagen ----- */
+VIEWS.anlagen=()=>{
+  const ms=sortedMachines(),att=ms.filter(needsAttention).length;
+  return bar('Anlagen')+`
+  ${ms.length?`<p class="${att?'':'muted'}"${att?' style="color:var(--red);font-weight:600"':''}>${att?att+(att===1?' Anlage braucht':' Anlagen brauchen')+' Aufmerksamkeit':'Keine Anlage braucht Aufmerksamkeit.'}</p>
+    <section class="card"><div>${ms.map(m=>`<button class="mrow" data-act="machine" data-id="${m.id}">${avatar(m)}<span><span class="nm">${esc(m.name)}</span>${m.place?`<br><span class="muted small">${esc(m.place)}</span>`:''}<br><span class="muted small">Geändert seit ${fmtSince(m.statusAt)}</span></span>${pill(m.status)}</button>`).join('')}</div></section>`
+    :'<div class="card"><p class="muted">Noch keine Anlage angelegt. Du legst deine Maschinen selbst an.</p></div>'}
+  <button class="btn primary" data-act="newmachine">Anlage anlegen</button>
+  ${ms.length?'<button class="btn quiet" data-act="csvmachines">Anlagen als CSV exportieren</button>':''}`;
+};
+ACT.newmachine=()=>go('anlage',{m:{id:null,name:'',place:'',status:'laeuft',note:'',image:''}});
+ACT.machine=el=>{const m=S.machines.find(x=>x.id===el.dataset.id);if(m)go('anlage',{m:{id:m.id,name:m.name,place:m.place||'',status:m.status,note:m.note||'',image:m.image||''}})};
+VIEWS.anlage=()=>{
+  const m=V.m,old=m.id&&S.machines.find(x=>x.id===m.id);
+  return bar(m.id?'Anlage':'Neue Anlage')+`
+  <section class="card center">${avatar(m,true)}
+    <div class="btnrow" style="width:100%"><label class="btn sm">Kamera<input class="vh" type="file" accept="image/*" capture="environment" data-chg="mimage" id="m-cam"></label><label class="btn sm">Aus Galerie<input class="vh" type="file" accept="image/*" data-chg="mimage" id="m-gal"></label>${m.image?'<button class="btn sm quiet" data-act="mnoimage">Bild entfernen</button>':''}</div>
+  </section>
+  <section class="card">
+    <label class="field"><span>Name</span><input type="text" id="m-name" data-inp="mfield" data-key="name" value="${esc(m.name)}" autocomplete="off"></label>
+    <label class="field"><span>Ort (optional)</span><input type="text" id="m-place" data-inp="mfield" data-key="place" value="${esc(m.place)}" autocomplete="off"></label>
+    <div class="field"><span>Status</span><div class="seg wrapseg" role="group" aria-label="Status">${Object.keys(STATUS).map(k=>`<button class="${STATUS[k].cls}" data-act="mstatus" data-id="${k}" aria-pressed="${k===m.status}">${STATUS[k].name}</button>`).join('')}</div></div>
+    ${old?`<p class="muted small">Status geändert seit ${fmtSince(old.statusAt)}</p>`:''}
+    <label class="field"><span>Notiz</span><textarea id="m-note" data-inp="mfield" data-key="note">${esc(m.note)}</textarea></label>
+  </section>
+  <button class="btn primary big" data-act="savemachine">${m.id?'Speichern':'Anlegen'}</button>
+  ${m.id?'<button class="btn danger" data-act="delmachine" data-confirm="Wirklich löschen?">Anlage löschen</button>':''}`;
+};
+INP.mfield=el=>{V.m[el.dataset.key]=el.value};
+ACT.mstatus=el=>{V.m.status=el.dataset.id;render()};
+ACT.mnoimage=()=>{V.m.image='';render()};
+CHG.mimage=async el=>{const f=el.files&&el.files[0];if(!f)return;try{V.m.image=await squareImage(f,320);render()}catch(e){toast('Das Bild konnte nicht gelesen werden.')}};
+ACT.savemachine=async()=>{
+  const d=V.m,name=d.name.trim();if(!name){toast('Bitte einen Namen eingeben.');return}
+  let m=d.id&&S.machines.find(x=>x.id===d.id);
+  if(!m){m={id:uid(),created:Date.now(),statusAt:Date.now(),status:d.status};S.machines.push(m)}
+  else if(m.status!==d.status){m.status=d.status;m.statusAt=Date.now()}
+  m.name=name;m.place=d.place.trim();m.note=d.note.trim();m.image=d.image;
+  await save('machines',m);toast('Gespeichert.');back();
+};
+ACT.delmachine=async()=>{const id=V.m.id;S.machines=S.machines.filter(m=>m.id!==id);await Store.del('machines',id);toast('Anlage gelöscht.');back()};
+ACT.csvmachines=()=>saveFile('fehlerbild_anlagen_'+stampName(Date.now())+'.csv',toCsv([['Name','Ort','Status','Notiz','Geändert']].concat(sortedMachines().map(m=>[m.name,m.place||'',STATUS[m.status].name,m.note||'',fmtDate(m.statusAt)+' '+fmtTime(m.statusAt)]))));
+
+/* ----- Einstellungen, Produkte, Vorlagen ----- */
+VIEWS.einstellungen=()=>bar('Einstellungen')+`
+  <section class="card"><h3>Produkte und Fehlerarten</h3><p class="muted small">Tippe auf ein Produkt, um es umzubenennen, Fehlerarten zu ändern und Referenzfotos anzulegen.</p>
+    <div class="list">${S.products.map(p=>{const ds=defsOf(p.id),n=S.refs.filter(r=>r.productId===p.id).length;return `<button class="btn quiet" style="justify-content:space-between;text-align:left" data-act="product" data-id="${p.id}"><span>${esc(p.name)}</span><span class="mono muted small">${ds.length} Fehler · ${n} Vorlagen</span></button>`}).join('')}</div>
+    <form class="inline" data-sub="addproduct"><input type="text" id="prod-new" name="text" placeholder="Neues Produkt" autocomplete="off" aria-label="Neues Produkt"><button class="btn">Hinzufügen</button></form>
+  </section>
+  <section class="card"><h3>Daten</h3>
+    <dl class="kv"><dt>Prüfungen</dt><dd>${S.checks.length}</dd><dt>Referenzfotos</dt><dd>${S.refs.length}</dd><dt>Belegter Speicher</dt><dd id="usage">–</dd><dt>Offline nutzbar</dt><dd id="offl">–</dd></dl>
+    <button class="btn" data-act="csvall">Alle Prüfungen als CSV exportieren</button>
+    <button class="btn danger" data-act="delchecks" data-confirm="Wirklich alle Prüfungen löschen?">Nur die Prüfungen löschen</button>
+    <button class="btn danger" data-act="resetall" data-confirm="Wirklich alles löschen?">Alles zurücksetzen</button>
+  </section>
+  <section class="card"><h3>PIN-Sperre</h3>
+    ${!hasCrypto?'<p class="muted small">Die PIN-Sperre ist in diesem Browser nicht verfügbar.</p>'
+      :S.kv.pin?`<p class="small"><strong style="color:var(--green)">Aktiv.</strong> Die App fragt beim Öffnen nach der PIN und nach 2 Minuten im Hintergrund erneut.</p>
+        <div class="btnrow"><button class="btn sm" data-act="pinchange">PIN ändern</button><button class="btn sm" data-act="locknow">Jetzt sperren</button></div>
+        <button class="btn sm quiet" data-act="pinremove">PIN-Sperre entfernen</button>`
+      :'<p class="small">Keine PIN festgelegt. Jeder mit deinem entsperrten Handy kann die App öffnen.</p><button class="btn" data-act="pinsetup">PIN festlegen</button>'}
+    <p class="muted small">Die PIN sperrt die App. Die Daten selbst werden nicht verschlüsselt. Wer die PIN vergisst, kann nur alles löschen.</p>
+  </section>
+  <section class="card"><h3>Gut zu wissen</h3>
+    <p class="small">Alles liegt nur im Browser dieses Geräts. Es gibt kein Konto und keine Synchronisation. Wenn du die Browser-Daten löschst oder ein anderes Handy benutzt, sind die Daten weg. Exportiere wichtige Fotos und Zahlen deshalb regelmäßig.</p>
+    <p class="small">Der Vergleich misst Bildähnlichkeit. Er erkennt keine Fehler von selbst. Gute, ähnlich aufgenommene Referenzfotos sind die Voraussetzung.</p>
+  </section>`;
+AFTER.einstellungen=async()=>{
+  try{const e=await navigator.storage.estimate(),u=$('#usage');if(u&&e&&e.usage!=null)u.textContent=(e.usage/1048576).toFixed(1).replace('.',',')+' MB'}catch(e){}
+  try{const r=await navigator.serviceWorker.getRegistration(),o=$('#offl');if(o)o.textContent=r&&r.active?'Ja':'Noch nicht'}catch(e){const o=$('#offl');if(o)o.textContent='Nein'}
+};
+SUB.addproduct=async f=>{const t=f.elements.text.value.trim();if(!t)return;const p=await addProduct(t);go('produkt',{id:p.id})};
+ACT.product=el=>go('produkt',{id:el.dataset.id});
+ACT.csvall=()=>{if(!S.checks.length){toast('Es gibt noch keine Prüfungen.');return}return saveFile('fehlerbild_pruefungen_'+stampName(Date.now())+'.csv',checksCsv(S.checks))};
+ACT.delchecks=async()=>{await delChecks(()=>true);toast('Alle Prüfungen gelöscht.');render()};
+ACT.resetall=async()=>{await wipeAll();render();toast('Alles zurückgesetzt. Auch die PIN ist entfernt.')};
+VIEWS.produkt=()=>{
+  const p=prod(V.id);if(!p)return bar('Produkt')+'<p class="muted">Dieses Produkt existiert nicht mehr.</p>';
+  return bar(p.name)+`
+  <section class="card"><label class="field"><span>Name des Produkts</span><input type="text" id="p-name" data-chg="pname" value="${esc(p.name)}" autocomplete="off"></label></section>
+  <section class="card"><h3>Fehlerarten und Vorlagen</h3>
+    ${defsOf(p.id).map(d=>{const rs=refsOf(d.id);return `<div class="dcard">
+      <div class="inline"><input type="text" id="dn-${d.id}" data-chg="dname" data-id="${d.id}" value="${esc(d.name)}" aria-label="Name der Fehlerart" autocomplete="off"><button class="x" data-act="deldefect" data-id="${d.id}" data-confirm="Sicher?">Löschen</button></div>
+      ${rs.length?`<div class="refs">${rs.map(r=>`<span class="ref"><img src="${r.thumb}" alt="Vorlage" loading="lazy"><button data-act="delref" data-id="${r.id}" data-confirm="?" aria-label="Vorlage löschen">×</button></span>`).join('')}</div>`:'<p class="small" style="color:var(--brown)">Noch keine Vorlage</p>'}
+      <label class="btn sm quiet">Vorlage hinzufügen<input class="vh" type="file" accept="image/*" multiple data-chg="addrefs" data-id="${d.id}" id="rf-${d.id}"></label></div>`}).join('')||'<p class="muted">Keine Fehlerarten.</p>'}
+    <form class="inline" data-sub="adddefect"><input type="text" id="def-new" name="text" placeholder="Neue Fehlerart" autocomplete="off" aria-label="Neue Fehlerart"><button class="btn">Hinzufügen</button></form>
+  </section>
+  <button class="btn danger" data-act="delproduct" data-confirm="Wirklich löschen? Auch Vorlagen und Prüfungen">Produkt löschen</button>
+  <p class="muted small">Löschen entfernt auch die Fehlerarten, Referenzfotos und Prüfungen dieses Produkts.</p>`;
+};
+CHG.pname=async el=>{const p=prod(V.id),t=el.value.trim();if(!p||!t){render();return}p.name=t;await save('products',p);render();toast('Umbenannt.')};
+CHG.dname=async el=>{const d=def(el.dataset.id),t=el.value.trim();if(!d||!t){render();return}d.name=t;await save('defects',d);toast('Umbenannt.')};
+SUB.adddefect=async f=>{
+  const t=f.elements.text.value.trim();if(!t)return;
+  const d={id:uid(),productId:V.id,name:t,pos:Date.now()};S.defects.push(d);await save('defects',d);render();
+};
+CHG.addrefs=async el=>{
+  const d=def(el.dataset.id),files=[...(el.files||[])];if(!d||!files.length)return;
+  toast('Vorlagen werden verarbeitet …');let ok=0;
+  for(const f of files){try{const {vec,thumb}=await analyse(f);await addRef(d.productId,d.id,vec,thumb);ok++}catch(e){}}
+  render();toast(ok+(ok===1?' Vorlage':' Vorlagen')+' für „'+d.name+'“ gespeichert.');
+};
+ACT.delref=async el=>{await delRefs(r=>r.id===el.dataset.id);render()};
+ACT.deldefect=async el=>{await delDefect(el.dataset.id);render();toast('Fehlerart gelöscht.')};
+ACT.delproduct=async()=>{await delProduct(V.id);toast('Produkt gelöscht.');back()};
+
+/* ===== PIN-Sperre: sperrt die App, verschlüsselt die Daten aber nicht ===== */
+const hasCrypto=!!(window.crypto&&crypto.subtle);
+const L={mode:null,entry:'',first:'',msg:'',cb:null,forgot:false,later:false};
+const b64=u=>btoa(String.fromCharCode(...u));
+async function pinHash(pin,salt){
+  const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(pin),'PBKDF2',false,['deriveBits']);
+  const bits=await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt:Uint8Array.from(atob(salt),c=>c.charCodeAt(0)),iterations:150000},key,256);
+  return b64(new Uint8Array(bits));
+}
+function lockWait(){const f=S.kv.pinFail;return f&&f.until>Date.now()?Math.ceil((f.until-Date.now())/1000):0}
+function lockOpen(mode,cb){L.mode=mode;L.entry='';L.first='';L.msg='';L.cb=cb||null;L.forgot=false;lockRender()}
+function lockClose(){L.mode=null;L.entry='';L.first='';L.cb=null;L.forgot=false;L.later=false;lockRender()}
+function lockRender(){
+  const el=$('#lock'),app=$('#app');
+  if(!L.mode){el.hidden=true;app.hidden=false;return}
+  el.hidden=false;app.hidden=true;
+  if(L.forgot){el.innerHTML=`<h2>PIN vergessen</h2><p style="max-width:300px">Ohne PIN kommst du nicht an die Daten. Du kannst nur alles löschen und neu beginnen. Fotos, Prüfungen, Aufgaben, Stempel und Anlagen sind dann weg.</p>
+    <button class="btn danger" data-act="pinreset" data-confirm="Wirklich alles löschen?">Alles löschen und neu beginnen</button><button class="btn quiet" data-act="pinforgot">Zurück</button>`;return}
+  const setup=L.mode==='setup1'||L.mode==='setup2',wait=lockWait();
+  const T={unlock:['Fehlerbild','PIN eingeben'],verify:['PIN-Sperre','Aktuelle PIN eingeben'],setup1:['PIN festlegen','Wähle 4 bis 8 Ziffern'],setup2:['PIN festlegen','PIN zur Sicherheit wiederholen']}[L.mode];
+  const n=setup?Math.max(4,L.entry.length):S.kv.pin.len;
+  el.innerHTML=`<h2>${T[0]}</h2><p class="muted">${T[1]}</p>
+  <div class="dots" role="img" aria-label="${L.entry.length} Ziffern eingegeben">${Array.from({length:n},(_,i)=>`<i class="${i<L.entry.length?'on':''}"></i>`).join('')}</div>
+  <p class="lockmsg" role="alert">${esc(wait?'Zu viele Versuche. Bitte '+wait+' s warten.':L.msg)}</p>
+  <div class="pad">${[1,2,3,4,5,6,7,8,9].map(d=>`<button data-act="pin" data-id="${d}">${d}</button>`).join('')}
+    <button class="fn" data-act="pincancel"${L.mode==='unlock'?' disabled':''}>${L.later?'Später':'Abbrechen'}</button><button data-act="pin" data-id="0">0</button><button class="fn" data-act="pindel" aria-label="Letzte Ziffer löschen">Löschen</button></div>
+  ${setup?`<button class="btn primary" data-act="pinok">${L.mode==='setup1'?'Weiter':'PIN speichern'}</button>`:''}
+  ${L.mode==='unlock'?'<button class="link" data-act="pinforgot">PIN vergessen?</button>':''}`;
+}
+async function pinCheck(){
+  const p=S.kv.pin,ok=(await pinHash(L.entry,p.salt))===p.hash;
+  if(ok){if(S.kv.pinFail)await setKv('pinFail',null);const cb=L.cb;lockClose();if(cb)cb();return}
+  const n=((S.kv.pinFail&&S.kv.pinFail.n)||0)+1;
+  await setKv('pinFail',{n,until:n>=5?Date.now()+30000:0});L.entry='';L.msg='Falsche PIN.';lockRender();
+}
+ACT.pin=async el=>{
+  if(!L.mode||lockWait())return;
+  const setup=L.mode==='setup1'||L.mode==='setup2',max=setup?8:S.kv.pin.len;
+  if(L.entry.length>=max)return;
+  L.entry+=el.dataset.id;L.msg='';lockRender();
+  if(!setup&&L.entry.length===max)await pinCheck();
+};
+ACT.pindel=()=>{L.entry=L.entry.slice(0,-1);lockRender()};
+ACT.pincancel=async()=>{if(L.mode==='unlock')return;if(L.later)await setKv('pinSkipped',true);lockClose()};
+ACT.pinforgot=()=>{L.forgot=!L.forgot;lockRender()};
+ACT.pinok=async()=>{
+  if(L.mode==='setup1'){
+    if(L.entry.length<4){L.msg='Mindestens 4 Ziffern.';lockRender();return}
+    L.first=L.entry;L.entry='';L.msg='';L.mode='setup2';lockRender();
+  }else if(L.mode==='setup2'){
+    if(L.entry!==L.first){L.mode='setup1';L.entry='';L.first='';L.msg='Die beiden PINs waren verschieden. Bitte noch einmal.';lockRender();return}
+    const salt=b64(crypto.getRandomValues(new Uint8Array(16)));
+    await setKv('pin',{salt,hash:await pinHash(L.entry,salt),len:L.entry.length});await setKv('pinFail',null);
+    lockClose();render();toast('PIN-Sperre ist aktiv.');
+  }
+};
+async function wipeAll(){
+  for(const s of STORES)await Store.clear(s);
+  for(const k of Object.keys(S))S[k]=k==='kv'?{}:[];
+  await seed();await setKv('pinSkipped',true);stack.length=0;V={name:'start'};
+}
+ACT.pinreset=async()=>{await wipeAll();lockClose();render();toast('Alles gelöscht. Die App ist wieder leer.')};
+ACT.pinsetup=()=>lockOpen('setup1');
+ACT.pinchange=()=>lockOpen('verify',()=>lockOpen('setup1'));
+ACT.pinremove=()=>lockOpen('verify',async()=>{await setKv('pin',null);render();toast('PIN-Sperre entfernt.')});
+ACT.locknow=()=>lockOpen('unlock');
+let hiddenAt=0;
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){hiddenAt=Date.now();return}
+  if(S.kv.pin&&!L.mode&&hiddenAt&&Date.now()-hiddenAt>120000)lockOpen('unlock');
+});
+document.addEventListener('keydown',e=>{
+  if(!L.mode||L.forgot||e.ctrlKey||e.metaKey||e.altKey)return;
+  if(/^[0-9]$/.test(e.key)){e.preventDefault();run(ACT.pin,{dataset:{id:e.key}})}
+  else if(e.key==='Backspace'){e.preventDefault();ACT.pindel()}
+  else if(e.key==='Enter'&&(L.mode==='setup1'||L.mode==='setup2')){e.preventDefault();run(ACT.pinok)}
+});
+
+/* ===== Ereignisse ===== */
+let armedEl=null,armedT=null;
+function disarm(){if(armedEl&&armedEl.isConnected){armedEl.textContent=armedEl.dataset.label;armedEl.classList.remove('armed')}armedEl=null;clearTimeout(armedT)}
+function confirmTap(el){
+  if(armedEl===el){disarm();return true}
+  disarm();armedEl=el;el.dataset.label=el.textContent;el.textContent=el.dataset.confirm;el.classList.add('armed');
+  armedT=setTimeout(disarm,3500);return false;
+}
+const run=(fn,a,b)=>{if(fn)Promise.resolve().then(()=>fn(a,b)).catch(e=>{console.error(e);toast('Das hat nicht geklappt.')})};
+document.addEventListener('click',e=>{
+  const el=e.target.closest('[data-act]');if(!el)return;
+  if(el.dataset.confirm&&!confirmTap(el))return;
+  run(ACT[el.dataset.act],el,e);
+});
+document.addEventListener('change',e=>{const el=e.target.closest('[data-chg]');if(el)run(CHG[el.dataset.chg],el,e)});
+document.addEventListener('input',e=>{const el=e.target.closest('[data-inp]');if(el)run(INP[el.dataset.inp],el,e)});
+document.addEventListener('submit',e=>{e.preventDefault();run(SUB[e.target.dataset.sub],e.target)});
+
+function tick(){
+  if(L.mode&&!L.forgot&&S.kv.pinFail&&S.kv.pinFail.until>Date.now()-1500)lockRender();
+  if(V.name==='start'){
+    if(currentShift()!==V.shown){render();return}
+    const c=$('#clock');if(c)c.innerHTML=clockHtml();
+  }else if(V.name==='stempeluhr'){
+    const now=Date.now(),s=$('#since'),a=$('#wtoday'),b=$('#wweek');
+    if(s)s.textContent=sinceHtml();
+    if(a)a.textContent=fmtDur(workedMs(S.stamps,startOfDay(),now));
+    if(b)b.textContent=fmtDur(workedMs(S.stamps,mondayStart(new Date()),now));
+  }
+}
+async function init(){
+  await Store.open();
+  for(const s of ['products','defects','refs','checks','tasks','stamps','machines'])S[s]=await Store.all(s);
+  (await Store.all('kv')).forEach(r=>{S.kv[r.id]=r.value});
+  if(!S.kv.seeded)await seed();
+  S.products.sort((a,b)=>a.pos-b.pos);S.defects.sort((a,b)=>a.pos-b.pos);S.checks.sort((a,b)=>b.ts-a.ts);S.stamps.sort((a,b)=>a.ts-b.ts);S.refs.sort((a,b)=>a.ts-b.ts);
+  render();
+  if(hasCrypto&&S.kv.pin)lockOpen('unlock');
+  else if(hasCrypto&&!S.kv.pinSkipped){lockOpen('setup1');L.later=true;lockRender()}
+  setInterval(tick,1000);
+  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{})}catch(e){}
+  try{if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1'))navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
+}
+init().catch(e=>{console.error(e);$('#app').innerHTML='<div class="top"><h1>Fehlerbild</h1><p>Die App konnte nicht starten. Bitte lade die Seite neu.</p></div>'});
+</script>
+</body>
+</html>
