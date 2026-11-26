@@ -246,6 +246,11 @@ td:first-child{overflow-wrap:anywhere}
   .wrap{max-width:none;padding:0}
   .paper{border-radius:0;padding:0}
 }
+.niog{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.nioc{display:flex;flex-direction:column;gap:6px;padding:6px;border:0;border-radius:var(--r);background:var(--panel);box-shadow:var(--sh);text-align:left;color:var(--ink);cursor:pointer;font:inherit}
+.nioc img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;background:#000}
+.nioc .small{line-height:1.3}
+#nioimg{display:block;width:100%;height:auto;touch-action:pan-y}
 </style>
 </head>
 <body>
@@ -254,7 +259,7 @@ td:first-child{overflow-wrap:anywhere}
 <div id="toast" class="toast" role="status" hidden></div>
 <script>
 'use strict';
-const APP_VERSION='2.1.0';
+const APP_VERSION='2.2.0';
 try{document.documentElement.dataset.mode=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){}
 /* ===== PURE-START: reine Funktionen ohne DOM ===== */
 const p2=n=>String(n).padStart(2,'0');
@@ -372,8 +377,8 @@ const ACCENTS=[['blue','Blau'],['indigo','Indigo'],['purple','Violett'],['pink',
 /* Systemfarben, je [hell, dunkel] */
 const COL={blue:['#007aff','#0a84ff'],indigo:['#5856d6','#5e5ce6'],purple:['#af52de','#bf5af2'],pink:['#ff2d55','#ff375f'],red:['#ff3b30','#ff453a'],orange:['#ff9500','#ff9f0a'],yellow:['#ffcc00','#ffd60a'],green:['#34c759','#30d158'],mint:['#00c7be','#63e6e2'],teal:['#30b0c7','#40c8e0'],cyan:['#32ade6','#64d2ff'],brown:['#a2845e','#ac8e68'],gray:['#8e8e93','#8e8e93'],excel:['#1d8348','#2fa866']};
 /* Jeder Bereich: Symbol und eigene Farbe */
-const AREAS={foto:['cam','blue'],vergleich:['cmp','cyan'],galerie:['grid','pink'],stoerungen:['alert','red'],anlagen:['fab','teal'],produkte:['box','brown'],wartung:['wrench','orange'],checklisten:['check','green'],aufgaben:['list','yellow'],zahlen:['num','mint'],auswertung:['bars','purple'],berichte:['doc','indigo'],stempeluhr:['clock','gray'],daten:['xls','excel'],einstellungen:['set','gray']};
-const VIEWAREA={eintrag:'galerie',stoerung:'stoerungen',anlage:'anlagen',anlageedit:'anlagen',produkt:'produkte',wartungedit:'wartung',checkliste:'checklisten',aufgabe:'aufgaben',druck:'berichte'};
+const AREAS={foto:['cam','blue'],vergleich:['cmp','cyan'],galerie:['grid','pink'],stoerungen:['alert','red'],anlagen:['fab','teal'],produkte:['box','brown'],wartung:['wrench','orange'],checklisten:['check','green'],aufgaben:['list','yellow'],zahlen:['num','mint'],auswertung:['bars','purple'],berichte:['doc','indigo'],stempeluhr:['clock','gray'],daten:['xls','excel'],einstellungen:['set','gray'],niobilder:['grid','red']};
+const VIEWAREA={niobild:'niobilder',eintrag:'galerie',stoerung:'stoerungen',anlage:'anlagen',anlageedit:'anlagen',produkt:'produkte',wartungedit:'wartung',checkliste:'checklisten',aufgabe:'aufgaben',druck:'berichte'};
 const areaOf=v=>AREAS[v]?v:VIEWAREA[v];
 const needsAttention=m=>m.status==='stoerung'||m.status==='stillstand';
 
@@ -410,14 +415,14 @@ const ICON={
 const ico=n=>'<svg viewBox="0 0 24 24" aria-hidden="true">'+ICON[n]+'</svg>';
 
 /* ===== Speicher: IndexedDB, bei Verweigerung nur Arbeitsspeicher ===== */
-const STORES=['kv','products','defects','refs','checks','images','tasks','stamps','machines','faults','maint','lists','counts'];
-const LISTS=['products','defects','refs','checks','tasks','stamps','machines','faults','maint','lists','counts'];
+const STORES=['kv','products','defects','refs','checks','images','tasks','stamps','machines','faults','maint','lists','counts','nio'];
+const LISTS=['products','defects','refs','checks','tasks','stamps','machines','faults','maint','lists','counts','nio'];
 const Store={
   db:null,mem:null,
   async open(){
     try{
       this.db=await new Promise((res,rej)=>{
-        const r=indexedDB.open('fehlerbild',2);
+        const r=indexedDB.open('fehlerbild',3);
         r.onupgradeneeded=()=>{const d=r.result;for(const s of STORES)if(!d.objectStoreNames.contains(s))d.createObjectStore(s,{keyPath:'id'})};
         r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);r.onblocked=()=>rej(new Error('blocked'));
         setTimeout(()=>rej(new Error('timeout')),6000);
@@ -444,7 +449,7 @@ async function save(store,obj){
   catch(e){toast('Speichern fehlgeschlagen. Ist der Speicher des Geräts voll?');throw e}
 }
 
-const S={kv:{},products:[],defects:[],refs:[],checks:[],tasks:[],stamps:[],machines:[],faults:[],maint:[],lists:[],counts:[]};
+const S={kv:{},products:[],defects:[],refs:[],checks:[],tasks:[],stamps:[],machines:[],faults:[],maint:[],lists:[],counts:[],nio:[]};
 async function setKv(k,v){S.kv[k]=v;await save('kv',{id:k,value:v})}
 const prod=id=>S.products.find(p=>p.id===id);
 const def=id=>S.defects.find(d=>d.id===id);
@@ -704,7 +709,7 @@ W.checklisten=()=>{
 W.bereiche=()=>{
   const t=today(),nToday=S.checks.filter(c=>c.ts>=startOfDay()).length,open=S.tasks.filter(x=>!x.done).length,inn=isIn(),att=S.machines.filter(needsAttention).length,
     of=S.faults.filter(f=>f.status==='offen').length,md=S.maint.filter(m=>!m.done&&m.due&&m.due<=t).length;
-  const T=[['foto','Neues Foto',''],['vergleich','Bildvergleich',''],['galerie','Galerie',nToday+' heute'],
+  const T=[['foto','Neues Foto',''],['vergleich','Bildvergleich',''],['galerie','Galerie',nToday+' heute'],['niobilder','NIO-Bilder',S.nio.length?S.nio.length+'':''],
     ['stoerungen','Störungen',of?of+' offen':S.faults.length+'',of?'hot':''],['anlagen','Anlagen',S.machines.length+(att?' · '+att+' rot':''),att?'hot':''],['produkte','Produkte',S.products.length+''],
     ['wartung','Wartung',md?md+' fällig':S.maint.length+'',md?'hot':''],['checklisten','Checklisten',S.lists.length+''],['aufgaben','Aufgaben',open+' offen',''],
     ['zahlen','Stückzahlen',S.counts.length+''],['auswertung','Auswertung',''],['berichte','Berichte',''],
@@ -1069,6 +1074,7 @@ VIEWS.anlage=()=>{
     <div class="kpis"><div class="kpi"><b>${k.c}</b><span>Geprüft</span></div><div class="kpi"><b>${k.n}</b><span>NIO</span></div><div class="kpi"><b class="${qClass(m,k.q)}">${fmtQ(k.q)}</b><span>Quote</span></div></div>
     <p class="muted small">${hasNum(m.ziel)?'Ziel höchstens '+String(m.ziel).replace('.',',')+' %':'Kein Ziel hinterlegt'}${hasNum(m.rot)?' · rot ab '+String(m.rot).replace('.',',')+' %':''}</p>
   </section>
+  ${nioList(m.name).length?`<button class="btn" data-act="nioanl">${ico('grid')}NIO-Bilder aus dem Cockpit (${nioList(m.name).length})</button>`:''}
   <section class="card"><h3>Steckbrief</h3>${fieldsDl(m.fields)||'<p class="muted small">Noch nichts eingetragen. Tippe auf „Bearbeiten“.</p>'}
     ${m.note?`<p class="small"><span class="muted">Notiz:</span> ${esc(m.note)}</p>`:''}
     ${ps.length?`<p class="small"><span class="muted">Produkte:</span> ${ps.map(p=>esc(p.name)).join(', ')}</p>`:''}
@@ -1477,6 +1483,7 @@ async function readXlsx(buf){
 function setField(fields,k,v){const f=fields.find(x=>x.k.trim().toLowerCase()===k.toLowerCase());if(f){if(v)f.v=v}else fields.push({k,v})}
 async function importCockpit(buf){
   const x=await readXlsx(buf);
+  if(x.names.includes('Einstellungen')&&x.names.includes('Übersicht'))return importCockpitV3(x);
   if(!['Anlagen','Produkte','Tagesdaten'].every(n=>x.names.includes(n)))throw new Error('nocockpit');
   const res={mNew:0,mUpd:0,pNew:0,pUpd:0,cNew:0,cUpd:0,tNew:0},str=v=>String(v==null?'':v).trim(),col=(c,n)=>String.fromCharCode(c.charCodeAt(0)+n);
   const find=(list,n)=>list.find(o=>o.name.trim().toLowerCase()===n.toLowerCase());
@@ -1520,9 +1527,138 @@ async function importCockpit(buf){
   await Store.putMany('tasks',nt);
   return res;
 }
+/* ----- Cockpit V3: Handy-Datei (JSON) und neue Excel-Datei ----- */
+const nameEq=(a,b)=>String(a||'').trim().toLowerCase()===String(b||'').trim().toLowerCase();
+const findNm=(list,n)=>list.find(o=>nameEq(o.name,n));
+async function cpMachine(name,res){
+  let m=findNm(S.machines,name);
+  if(!m){m={id:uid(),name:String(name).trim(),place:'',status:'laeuft',statusAt:Date.now(),created:Date.now(),note:'',image:'',ziel:'',rot:'',fields:[]};S.machines.push(m);await save('machines',m);res.mNew++}
+  return m;
+}
+const shiftId=s=>{const x=String(s||'').trim().charAt(0).toUpperCase();return x==='S'?'S':x==='N'?'N':'F'};
+async function cpCounts(rows,res){
+  const idx=new Map(S.counts.map(c=>[countKey(c),c])),chg=[];
+  for(const r of rows){
+    if(!r.date||!r.machine||!(r.checked>0))continue;
+    const m=await cpMachine(r.machine,res),p=r.product?findNm(S.products,r.product):null;
+    const nw={date:r.date,machineId:m.id,productId:p?p.id:'',shift:shiftId(r.shift),checked:Math.round(r.checked),nio:Math.round(r.nio||0),pseudo:Math.round(r.pseudo||0)};
+    const old=idx.get(countKey(nw));
+    if(old){if(old.checked!==nw.checked||old.nio!==nw.nio||old.pseudo!==nw.pseudo){Object.assign(old,nw,{src:'excel',exp:Date.now()});chg.push(old);res.cUpd++}}
+    else{const c=Object.assign({id:uid(),src:'excel',exp:Date.now()},nw);S.counts.push(c);idx.set(countKey(c),c);chg.push(c);res.cNew++}
+  }
+  await Store.putMany('counts',chg);
+}
+async function cpTasks(rows,res){
+  const nt=[];
+  for(const r of rows){
+    const text=String(r.text||'').trim();if(!text)continue;
+    if(S.tasks.some(t=>nameEq(t.text,text)))continue;
+    const pr=String(r.prio||'').charAt(0).toLowerCase(),m=r.machine?findNm(S.machines,r.machine):null,done=r.status==='Erledigt';
+    const t={id:uid(),text,done,doneAt:done?Date.now():null,ts:Date.now(),prio:pr==='h'?'h':pr==='n'?'n':'m',due:r.due||'',machineId:m?m.id:'',note:[r.who?'Verantwortlich: '+r.who:'',r.note||''].filter(Boolean).join(' · ')};
+    S.tasks.push(t);nt.push(t);res.tNew++;
+  }
+  await Store.putMany('tasks',nt);
+}
+async function cpProduct(name,fields,merk,machines,res){
+  let p=findNm(S.products,name);if(p)res.pUpd++;else{p=await addProduct(name);res.pNew++}
+  for(const f of fields)if(f.k)setField(p.fields,f.k,f.v);
+  merk.forEach((v,i)=>{if(v)setField(p.fields,'Prüfmerkmal '+(i+1),v)});
+  for(const an of machines){const m=findNm(S.machines,an);if(m&&!p.machines.includes(m.id))p.machines.push(m.id)}
+  await save('products',p);
+}
+async function cpMachineData(name,fields,ziel,grenze,res){
+  const had=!!findNm(S.machines,name),m=await cpMachine(name,res);if(had)res.mUpd++;
+  for(const f of fields){const k=String(f.k||'').trim(),v=String(f.v||'').trim();if(!k)continue;if(/^standort/i.test(k)){if(v)m.place=v}else setField(m.fields,k,v)}
+  if(typeof ziel==='number'&&ziel>0)m.ziel=+ziel.toFixed(2);if(typeof grenze==='number'&&grenze>0)m.rot=+grenze.toFixed(2);
+  await save('machines',m);
+}
+async function importCockpitJson(txt){
+  let d;try{d=JSON.parse(String(txt).replace(/^﻿/,''))}catch(e){throw new Error('nocockpit')}
+  if(!d||d.app!=='fehlerbild-cockpit')throw new Error('nocockpit');
+  const res={mNew:0,mUpd:0,pNew:0,pUpd:0,cNew:0,cUpd:0,tNew:0,bNew:0};
+  for(const a of d.anlagen||[])if(a&&a.name)await cpMachineData(a.name,a.felder||[],a.ziel,a.grenze,res);
+  for(const p of d.produkte||[])if(p&&p.name)await cpProduct(p.name,p.felder||[],p.merkmale||[],p.anlagen||[],res);
+  await cpCounts((d.tagesdaten||[]).map(c=>({date:c.d,machine:c.a,product:c.p,shift:c.s,checked:+c.g,nio:+c.n,pseudo:+c.ps})),res);
+  await cpTasks((d.aufgaben||[]).map(t=>({text:t.text,machine:t.anlage,prio:t.prio,due:t.faellig,status:t.status,who:t.wer,note:t.notiz})),res);
+  // NIO-Bilder: der Stand aus Excel ersetzt den alten Stand
+  const rows=(d.bilder||[]).filter(b=>b&&b.img).map(b=>({id:uid(),mname:b.a||'',product:b.p||'',date:b.d||b.tag||'',tag:b.tag||b.d||'',time:b.t||'',shift:b.s||'',bt:b.bt||'',name:b.n||'',cam:b.k||'',pseudo:!!+b.ps,src:'data:'+(b.mime||'image/jpeg')+';base64,'+b.img,at:Date.now()}));
+  try{
+    await Store.clear('nio');
+    for(let i=0;i<rows.length;i+=10)await Store.putMany('nio',rows.slice(i,i+10));
+  }catch(e){console.error(e);toast('Die Bilder sind zu groß für den Speicher dieses Geräts.')}
+  S.nio=rows;res.bNew=rows.length;
+  await setKv('nioAt',d.erstellt||new Date().toISOString());
+  return res;
+}
+async function importCockpitV3(x){
+  const res={mNew:0,mUpd:0,pNew:0,pUpd:0,cNew:0,cUpd:0,tNew:0},str=v=>String(v==null?'':v).trim();
+  const E=await x.sheet('Einstellungen'),A=await x.sheet('Anlagen'),P=await x.sheet('Produkte');
+  const AC='EFGHIJKL',PC='EFGHIJKLMNOP';
+  for(let i=0;i<8;i++){
+    const name=str(E('D'+(7+i)));if(!name)continue;
+    const fields=[];for(let r=8;r<=18;r++)fields.push({k:str(A('D'+r)),v:str(A(AC[i]+r))});
+    const z=E('W'+(7+i)),g=E('Y'+(7+i));
+    await cpMachineData(name,fields,typeof z==='number'?z*100:null,typeof g==='number'?g*100:null,res);
+  }
+  for(let k=0;k<12;k++){
+    const c=PC[k],name=str(P(c+'5'));if(!name)continue;
+    const fields=[];for(let r=7;r<=10;r++)fields.push({k:str(P('D'+r)),v:str(P(c+r))});
+    const merk=[];for(let r=12;r<=17;r++)merk.push(str(P(c+r)));
+    const ms=[];for(let r=19;r<=22;r++)if(str(P(c+r)))ms.push(str(P(c+r)));
+    await cpProduct(name,fields,merk.filter(Boolean),ms,res);
+  }
+  const rows=[];
+  for(const sh of ['Tagesdaten','Live']){
+    if(!x.names.includes(sh))continue;const T=await x.sheet(sh);
+    for(let r=6;r<=10005;r++){
+      const d=T('D'+r);if(d===''){if(sh==='Live')break;continue}
+      if(typeof d!=='number')continue;
+      rows.push({date:xlDay(d),machine:str(T('E'+r)),product:str(T('F'+r)),shift:str(T('G'+r)),checked:+T('H'+r)||0,nio:+T('I'+r)||0,pseudo:+T('J'+r)||0});
+    }
+  }
+  await cpCounts(rows,res);
+  if(x.names.includes('Aufgaben')){
+    const U=await x.sheet('Aufgaben'),ts=[];
+    for(let r=6;r<=205;r++){const du=U('G'+r);ts.push({text:str(U('D'+r)),machine:str(U('E'+r)),prio:str(U('F'+r)),due:typeof du==='number'?xlDay(du):'',status:str(U('H'+r)),who:str(U('I'+r)),note:str(U('J'+r))})}
+    await cpTasks(ts,res);
+  }
+  return res;
+}
+/* ----- NIO-Bilder aus dem Cockpit ----- */
+const nioList=f=>S.nio.filter(b=>!f||nameEq(b.mname,f)).sort((a,b)=>(a.date+' '+a.time)<(b.date+' '+b.time)?1:-1);
+const nioStand=()=>{const a=String(S.kv.nioAt||'');return a?fmtDay(a.slice(0,10))+' '+a.slice(11,16):''};
+VIEWS.niobilder=()=>{
+  const all=nioList(''),ms=[...new Set(all.map(b=>b.mname))].sort((a,b)=>a.localeCompare(b,'de')),f=V.fm||'',list=nioList(f);
+  return bar('NIO-Bilder')+`
+  <p class="muted small">Aus dem Cockpit${nioStand()?' · Stand '+esc(nioStand()):''} · ${all.length} ${all.length===1?'Bild':'Bilder'}. Neue Bilder: in Excel „Fürs Handy“, hier unter „Daten &amp; Excel“ einlesen.</p>
+  ${ms.length>1?`<div class="chips" role="group" aria-label="Anlage">${['',...ms].map(n=>`<button class="chip" data-act="niofilter" data-v="${esc(n)}" aria-pressed="${nameEq(n,f)}">${n?esc(n):'Alle'}</button>`).join('')}</div>`:''}
+  ${list.length?`<div class="niog">${list.map(b=>`<button class="nioc" data-act="nioopen" data-id="${b.id}"><img src="${b.src}" alt="" loading="lazy"><span class="small"><b>${esc(b.mname)}</b> · ${esc(fmtDay(b.date).slice(0,6))} ${esc(String(b.time).slice(0,5))}<br><span class="muted">${esc(b.shift)}${b.cam?' · '+esc(b.cam):''}</span>${b.pseudo?' <span class="tag">Pseudo</span>':''}</span></button>`).join('')}</div>`
+    :'<div class="card"><p class="muted">Noch keine NIO-Bilder. In Excel auf „Fürs Handy“ drücken und die Datei hier unter „Daten &amp; Excel“ einlesen.</p><button class="btn" data-act="go" data-v="daten">Zu „Daten &amp; Excel“</button></div>'}`;
+};
+ACT.niofilter=el=>{V.fm=el.dataset.v;render()};
+ACT.nioanl=()=>{const m=mach(V.id);if(m)go('niobilder',{fm:m.name})};
+ACT.nioopen=el=>{const l=nioList(V.fm||''),i=l.findIndex(b=>b.id===el.dataset.id);if(i>=0)go('niobild',{fm:V.fm||'',i})};
+VIEWS.niobild=()=>{
+  const l=nioList(V.fm),b=l[V.i];if(!b)return bar('NIO-Bild')+'<p class="muted">Dieses Bild gibt es nicht mehr.</p>';
+  return bar('NIO-Bild '+(V.i+1)+' / '+l.length)+`
+  <div class="photo"><img id="nioimg" src="${b.src}" alt="NIO-Bild ${esc(b.name)}">${b.pseudo?'<span class="stamp unsure">Pseudofehler</span>':''}</div>
+  <div class="btnrow"><button class="btn" data-act="nionav" data-d="-1">‹ Vorheriges</button><button class="btn" data-act="nionav" data-d="1">Nächstes ›</button></div>
+  <section class="card"><dl class="kv"><dt>Anlage</dt><dd>${esc(b.mname)}</dd>${b.product?`<dt>Produkt</dt><dd>${esc(b.product)}</dd>`:''}
+    <dt>Zeit</dt><dd>${esc(fmtDay(b.date))} ${esc(b.time)}</dd><dt>Schicht</dt><dd>${esc(b.shift)}</dd>
+    ${b.cam?`<dt>Kamera</dt><dd>${esc(b.cam)}</dd>`:''}${b.bt?`<dt>Bauteil</dt><dd>${esc(b.bt)}</dd>`:''}<dt>Datei</dt><dd class="small">${esc(b.name)}</dd></dl></section>
+  <button class="btn quiet" data-act="niosave">Bild speichern</button>
+  <p class="muted small">Wischen oder die Knöpfe blättern durch die Bilder.</p>`;
+};
+const nioStep=d=>{const l=nioList(V.fm);if(!l.length)return;V.i=(V.i+d+l.length)%l.length;render()};
+ACT.nionav=el=>nioStep(+el.dataset.d);
+ACT.niosave=()=>{const b=nioList(V.fm)[V.i];if(b)saveFile(b.name||('nio_'+b.date+'.jpg'),new Blob([dataUrlBytes(b.src)],{type:'image/jpeg'}))};
+AFTER.niobild=()=>{const im=$('#nioimg');if(!im)return;let x0=null;
+  im.addEventListener('touchstart',e=>{x0=e.touches[0].clientX},{passive:true});
+  im.addEventListener('touchend',e=>{if(x0==null)return;const dx=e.changedTouches[0].clientX-x0;x0=null;if(Math.abs(dx)>50)nioStep(dx<0?1:-1)},{passive:true})};
 async function backupJson(full){
   const out={app:'fehlerbild',v:2,version:APP_VERSION,at:Date.now(),stores:{}};
   for(const s of STORES){
+    if(s==='nio')continue;
     if(s==='images'){if(full)out.stores.images=(await Store.all('images')).map(r=>({id:r.id,type:r.type,b64:bufToB64(r.buf)}))}
     else if(s==='kv')out.stores.kv=(await Store.all('kv')).filter(r=>!/^pin/.test(r.id));
     else out.stores[s]=await Store.all(s);
@@ -1533,6 +1669,7 @@ async function restoreJson(txt){
   const d=JSON.parse(txt);if(!d||d.app!=='fehlerbild'||!d.stores)throw new Error('format');
   const pins=(await Store.all('kv')).filter(r=>/^pin/.test(r.id));
   for(const s of STORES){
+    if(s==='nio')continue;
     if(s==='images'&&!d.stores.images)continue;
     await Store.clear(s);
     const rows=s==='images'?d.stores.images.map(r=>({id:r.id,type:r.type,buf:b64ToBuf(r.b64)})):(d.stores[s]||[]);
@@ -1545,14 +1682,14 @@ VIEWS.daten=()=>{
   const r=V.res,nNew=S.counts.filter(c=>!c.exp).length;
   return bar('Daten & Excel')+`
   <section class="card"><h3>Cockpit → App</h3>
-    <p class="small">Wähl deine Cockpit-Datei (.xlsm). Die App liest Anlagen und Produkte mit Steckbrief, die Tagesdaten und die Aufgaben. Die Datei bleibt auf dem Gerät.</p>
-    <label class="btn primary">${ico('xls')}${V.busy?'Wird gelesen …':'Cockpit-Datei einlesen'}<input class="vh" type="file" accept=".xlsm,.xlsx,application/vnd.ms-excel.sheet.macroEnabled.12,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" data-chg="xlsx" id="x-file"></label>
+    <p class="small">Wähl die Handy-Datei <b>Fehlerbild_Cockpit.json</b> (in Excel: Knopf „Fürs Handy“) oder direkt deine Cockpit-Datei (.xlsm). Die App liest Anlagen und Produkte mit Steckbrief, die Stückzahlen und die Aufgaben – die JSON-Datei bringt zusätzlich die NIO-Bilder mit. Die Datei bleibt auf dem Gerät.</p>
+    <label class="btn primary">${ico('xls')}${V.busy?'Wird gelesen …':'Cockpit-Datei einlesen'}<input class="vh" type="file" accept=".json,application/json,.xlsm,.xlsx,application/vnd.ms-excel.sheet.macroEnabled.12,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" data-chg="xlsx" id="x-file"></label>
     ${V.err?`<p class="bad small">${esc(V.err)}</p>`:''}
-    ${r?`<dl class="kv num"><dt>Anlagen</dt><dd>${r.mNew} neu · ${r.mUpd} aktualisiert</dd><dt>Produkte</dt><dd>${r.pNew} neu · ${r.pUpd} aktualisiert</dd><dt>Tagesdaten</dt><dd>${r.cNew} neu · ${r.cUpd} geändert</dd><dt>Aufgaben</dt><dd>${r.tNew} neu</dd></dl>`:''}
+    ${r?`<dl class="kv num"><dt>Anlagen</dt><dd>${r.mNew} neu · ${r.mUpd} aktualisiert</dd><dt>Produkte</dt><dd>${r.pNew} neu · ${r.pUpd} aktualisiert</dd><dt>Tagesdaten</dt><dd>${r.cNew} neu · ${r.cUpd} geändert</dd><dt>Aufgaben</dt><dd>${r.tNew} neu</dd>${r.bNew!=null?`<dt>NIO-Bilder</dt><dd>${r.bNew}</dd>`:''}</dl>${r.bNew?'<button class="btn" data-act="go" data-v="niobilder">NIO-Bilder ansehen</button>':''}`:''}
     <p class="muted small">Mehrfaches Einlesen ist ungefährlich: Vorhandenes wird abgeglichen, nichts verdoppelt. Was du nur in der App eingetragen hast, bleibt stehen.</p>
   </section>
   <section class="card"><h3>App → Cockpit</h3>
-    <p class="small">Die App erzeugt eine CSV-Datei im Format deines Cockpits. In Excel: Blatt „Tagesdaten“ → Knopf „CSV importieren“.</p>
+    <p class="small">Die App erzeugt eine CSV-Datei im Format deines Cockpits. In Excel: Seite „Tagesdaten“ → Knopf „CSV aus der App“.</p>
     <button class="btn" data-act="csvcounts" data-all="">${nNew} neue Stückzahlen exportieren</button>
     <button class="btn quiet" data-act="csvcounts" data-all="1">Alle ${S.counts.length} Stückzahlen exportieren</button>
   </section>
@@ -1578,8 +1715,8 @@ VIEWS.daten=()=>{
 AFTER.daten=async()=>{try{const e=await navigator.storage.estimate(),u=$('#usage');if(u&&e&&e.usage!=null)u.textContent=(e.usage/1048576).toFixed(1).replace('.',',')+' MB'}catch(e){}};
 CHG.xlsx=async el=>{
   const f=el.files&&el.files[0];if(!f)return;V.res=null;V.err='';V.busy=true;render();
-  try{V.res=await importCockpit(await f.arrayBuffer())}
-  catch(e){console.error(e);const m=e&&e.message;V.err=m==='nocockpit'?'Das ist keine Cockpit-Datei. Es fehlen die Blätter „Anlagen“, „Produkte“ oder „Tagesdaten“.':m==='old'?'Dieser Browser ist dafür zu alt. Bitte aktualisiere ihn.':'Die Datei konnte nicht gelesen werden.'}
+  try{V.res=/\.json$/i.test(f.name)||/json/.test(f.type)?await importCockpitJson(await f.text()):await importCockpit(await f.arrayBuffer())}
+  catch(e){console.error(e);const m=e&&e.message;V.err=m==='nocockpit'?'Das ist keine Cockpit-Datei. Bitte „Fehlerbild_Cockpit.json“ oder die Cockpit-Datei (.xlsm) wählen.':m==='old'?'Dieser Browser ist dafür zu alt. Bitte aktualisiere ihn.':'Die Datei konnte nicht gelesen werden.'}
   V.busy=false;render();
 };
 ACT.csvall=()=>{if(!S.checks.length){toast('Es gibt noch keine Fotos.');return}return saveFile('fehlerbild_fotos_'+stampName(Date.now())+'.csv',checksCsv(S.checks),'text/csv')};
